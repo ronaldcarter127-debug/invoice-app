@@ -1,0 +1,130 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: white;
+    color: black;
+    padding: 20px;
+}
+
+.invoice-box {
+    max-width: 600px;
+    margin: auto;
+    padding: 30px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #00ee58;
+    padding-bottom: 20px;
+}
+
+.business-info {
+    text-align: left;
+}
+
+.business-info h1 {
+    margin: 0;
+    font-size: 28px;
+    color: #333;
+    font-weight: bold;
+}
+
+.business-info p {
+    margin: 3px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.invoice-meta {
+    text-align: right;
+}
+
+.invoice-meta h2 {
+    margin: 0 0 10px 0;
+    font-size: 22px;
+    color: #00ee58;
+}
+
+.bill-to-section {
+    margin: 30px 0;
+}
+
+.bill-to-section h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #333;
+    font-weight: bold;
+}
+
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+.invoice-table th,
+.invoice-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.invoice-table th {
+    background: #f8fafc;
+    font-weight: bold;
+}
+
+.totals-section {
+    text-align: right;
+    margin: 30px 0;
+}
+
+.totals-section p {
+    margin: 8px 0;
+    font-size: 16px;
+}
+
+.total {
+    font-size: 24px;
+    font-weight: bold;
+    color: #00ee58;
+}
+
+.notes-section {
+    margin: 30px 0;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 20px;
+}
+
+.notes-section h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.notes-section p {
+    margin: 5px 0;
+}
+
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .invoice-box {
+        box-shadow: none;
+        border: none;
+    }
+
+    .invoice-header,
+    .bill-to-section,
+    .totals-section,
+    .notes-section {
+        page-break-inside: avoid;
+    }
+}

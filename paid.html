@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Payment Received</title></head>
+<body style="font-family:Arial;padding:24px;">
+  <h2>✅ Payment received</h2>
+  <p>Thank you. Your payment was successful.</p>
+  <script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const invoiceNumber = String(params.get("invoice") || "").trim();
+  if (!invoiceNumber) return;
+
+  const invoices = JSON.parse(localStorage.getItem("invoiceHistory") || "[]");
+  const idx = invoices.findIndex(function (inv) {
+    return String(inv.invoiceNumber || "").trim() === invoiceNumber;
+  });
+
+  if (idx !== -1) {
+    invoices[idx].status = "Paid";
+    invoices[idx].amountPaid = Number(invoices[idx].finalTotal || invoices[idx].total || 0);
+    invoices[idx].balanceDue = 0;
+    invoices[idx].paidAt = new Date().toLocaleString();
+    localStorage.setItem("invoiceHistory", JSON.stringify(invoices));
+  }
+})();
+</script>
+</body>
+</html>
