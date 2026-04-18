@@ -124,13 +124,77 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
   .history-tabs {display:flex;gap:8px;margin-bottom:12px;}
   .history-tab {flex:1;padding:10px;font-size:14px;}
 }
+
+/* ── Dashboard ── */
+#dashboard {display:block;}
+#appContainer {display:none;}
+.dash-grid {display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;}
+.dash-card {
+  background:#1f2937;
+  border-radius:14px;
+  padding:24px 16px;
+  text-align:center;
+  cursor:pointer;
+  border:2px solid #374151;
+  transition:border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  user-select:none;
+}
+.dash-card:hover {border-color:#00ee58;transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,238,88,0.15);}
+.dash-card:active {transform:scale(0.97);}
+.dash-card .dash-icon {font-size:38px;margin-bottom:10px;}
+.dash-card .dash-label {font-size:15px;font-weight:700;color:#f1f5f9;letter-spacing:0.3px;}
+.dash-card .dash-sub {font-size:12px;color:#6b7280;margin-top:4px;}
+.dash-card.premium-card {border-color:#f59e0b22;}
+.dash-card.premium-card:hover {border-color:#f59e0b;box-shadow:0 6px 20px rgba(245,158,11,0.15);}
+.dash-back {background:none;border:none;color:#6b7280;font-size:14px;padding:6px 0;margin-bottom:8px;cursor:pointer;text-align:left;width:auto;}
+.dash-back:hover {color:#00ee58;}
+@media (max-width: 480px) {
+  .dash-grid {gap:10px;}
+  .dash-card {padding:18px 10px;}
+  .dash-card .dash-icon {font-size:32px;}
+  .dash-card .dash-label {font-size:14px;}
+}
 </style>
 
 </head>
 
 <body>
 
-<div class="card" id="appContainer">
+<!-- ── DASHBOARD ── -->
+<div id="dashboard" class="card">
+  <h2 style="margin:0 0 4px 0;">JobFlow Pro</h2>
+  <div id="dashBanner" class="mode-banner" style="margin-bottom:12px;">
+    <strong id="dashPlanBadge">Free Plan</strong>
+    <span id="dashPlanMsg">Upgrade to unlock history features.</span>
+  </div>
+  <div class="dash-grid">
+    <div class="dash-card" onclick="openForm('invoice')">
+      <div class="dash-icon">🧾</div>
+      <div class="dash-label">Create Invoice</div>
+      <div class="dash-sub">Bill a customer</div>
+    </div>
+    <div class="dash-card" onclick="openForm('quote')">
+      <div class="dash-icon">📋</div>
+      <div class="dash-label">Create Quote</div>
+      <div class="dash-sub">Send a price estimate</div>
+    </div>
+    <div class="dash-card premium-card" id="dashInvHistory" onclick="openInvoiceHistory()">
+      <div class="dash-icon">📂</div>
+      <div class="dash-label">Invoice History</div>
+      <div class="dash-sub" id="dashInvSub">Premium feature</div>
+    </div>
+    <div class="dash-card premium-card" id="dashQuoteHistory" onclick="openQuoteHistoryDash()">
+      <div class="dash-icon">📜</div>
+      <div class="dash-label">Quote History</div>
+      <div class="dash-sub">View past quotes</div>
+    </div>
+  </div>
+  <button id="upgradeBtn" class="upgrade-btn" style="width:100%;margin-top:14px;" onclick="upgrade()">Upgrade to Premium</button>
+</div>
+
+<!-- ── FORM ── -->
+<div class="card" id="appContainer" style="display:none;">
+<button class="dash-back" onclick="showDashboard()">&#8592; Dashboard</button>
 <h2>JobFlow Pro</h2>
 <div id="modeBanner" class="mode-banner">
   <strong id="planBadge">Free Plan</strong>
@@ -257,8 +321,6 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
   </select>
   <button type="button" onclick="applySelectedTemplate()">Apply Template</button>
 </div>
-
-<button id="upgradeBtn" class="upgrade-btn" onclick="upgrade()">Upgrade to Premium</button>
 
 <button onclick="resetApp()" class="danger">Reset App</button>
 </div>

@@ -190,6 +190,56 @@ function checkPaymentReturn() {
   }
 }
 
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+
+function showDashboard() {
+  document.getElementById("dashboard").style.display = "block";
+  document.getElementById("appContainer").style.display = "none";
+  document.getElementById("output").innerHTML = "";
+  const previewArea = document.getElementById("previewArea");
+  if (previewArea) previewArea.classList.remove("show");
+  updateDashboard();
+}
+
+function updateDashboard() {
+  const premium = App.premium;
+  const badge = document.getElementById("dashPlanBadge");
+  const msg = document.getElementById("dashPlanMsg");
+  const upgradeBtn = document.getElementById("upgradeBtn");
+  const invCard = document.getElementById("dashInvHistory");
+  const invSub = document.getElementById("dashInvSub");
+
+  if (badge) badge.textContent = premium ? "Premium Plan Active" : "Free Plan";
+  if (msg) msg.textContent = premium ? "All features unlocked." : "Upgrade to unlock history features.";
+  if (upgradeBtn) upgradeBtn.style.display = premium ? "none" : "block";
+  if (invCard) invCard.style.opacity = premium ? "1" : "0.55";
+  if (invSub) invSub.textContent = premium ? "View & sync paid status" : "Premium feature";
+}
+
+function openForm(mode) {
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("appContainer").style.display = "block";
+  App._dashMode = mode;
+}
+
+function openInvoiceHistory() {
+  if (!App.premium) { alert("Invoice History is a premium feature. Upgrade to access it."); return; }
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("appContainer").style.display = "block";
+  showInvoiceHistory();
+}
+
+function openQuoteHistoryDash() {
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("appContainer").style.display = "block";
+  showQuoteHistory("all");
+}
+
+window.showDashboard = showDashboard;
+window.openForm = openForm;
+window.openInvoiceHistory = openInvoiceHistory;
+window.openQuoteHistoryDash = openQuoteHistoryDash;
+
 window.onload = function() {
   App.premium = localStorage.getItem("isPremium") === "true" || localStorage.getItem("premium") === "true";
   checkPaymentReturn();
@@ -225,6 +275,8 @@ window.onload = function() {
       }, 300);
     });
   }
+
+  showDashboard();
 };
 
 (function () {
