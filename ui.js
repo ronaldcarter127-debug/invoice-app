@@ -1,6 +1,7 @@
 async function upgrade() {
   try {
-    const res = await fetch(getApiBaseUrl() + "/create-premium-checkout", {
+    const apiBase = (typeof getApiBaseUrl === "function" ? getApiBaseUrl() : "https://jobflow-api-bebm.onrender.com");
+    const res = await fetch(apiBase + "/create-premium-checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" }
     });
