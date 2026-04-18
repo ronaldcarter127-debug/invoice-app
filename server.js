@@ -43,6 +43,19 @@ function requiredEnv(name) {
   }
 }
 
+function requiredOneOfEnv(names) {
+  const ok = names.some(function (name) {
+    return process.env[name] && String(process.env[name]).trim();
+  });
+  if (!ok) {
+    throw new Error(`Missing required env: one of ${names.join(" or ")}`);
+  }
+}
+
+function getEmailPassword() {
+  return String(process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD || "").replace(/\s+/g, "");
+}
+
 // ⚠️ Webhook must use raw body — before express.json()
 app.post("/webhook", express.raw({ type: "application/json" }), async (req, res) => {
   const sig = req.headers["stripe-signature"];
@@ -94,11 +107,12 @@ app.use(cors({
 app.use(express.json({ limit: "2mb" }));
 
 app.get("/health", function (_req, res) {
-  const vars = ["EMAIL", "EMAIL_PASS", "MONGO_URI", "STRIPE_SECRET_KEY", "APP_BASE_URL", "FRONTEND_URL", "CORS_ORIGIN"];
+  const vars = ["EMAIL", "EMAIL_PASS", "EMAIL_PASSWORD", "MONGO_URI", "STRIPE_SECRET_KEY", "APP_BASE_URL", "FRONTEND_URL", "CORS_ORIGIN"];
   const status = {};
   vars.forEach(function (k) {
     status[k] = process.env[k] ? "✅ set" : "❌ missing";
   });
+  status.EMAIL_AUTH = getEmailPassword() ? "✅ set" : "❌ missing (set EMAIL_PASS or EMAIL_PASSWORD)";
   res.status(200).json({ ok: true, env: status });
 });
 
@@ -252,7 +266,7 @@ app.get("/payment-status/:invoiceNumber", async (req, res) => {
 app.post("/send-email", async (req, res) => {
   try {
     requiredEnv("EMAIL");
-    requiredEnv("EMAIL_PASS");
+    requiredOneOfEnv(["EMAIL_PASS", "EMAIL_PASSWORD"]);
 
     const body = req.body || {};
     const to = cleanText(body.to, 254);
@@ -322,7 +336,7 @@ app.post("/send-email", async (req, res) => {
       service: "gmail",
       auth: {
         user: cleanText(process.env.EMAIL, 254),
-        pass: String(process.env.EMAIL_PASS || "").replace(/\s+/g, "")
+        pass: getEmailPassword()
       }
     });
 
@@ -492,7 +506,7 @@ app.get("/accept-quote/:quoteNumber", async (req, res) => {
 app.post("/send-quote-email", async (req, res) => {
   try {
     requiredEnv("EMAIL");
-    requiredEnv("EMAIL_PASS");
+    requiredOneOfEnv(["EMAIL_PASS", "EMAIL_PASSWORD"]);
 
     const body = req.body || {};
     const to = cleanText(body.to, 254);
@@ -545,7 +559,7 @@ app.post("/send-quote-email", async (req, res) => {
       service: "gmail",
       auth: {
         user: cleanText(process.env.EMAIL, 254),
-        pass: String(process.env.EMAIL_PASS || "").replace(/\s+/g, "")
+        pass: getEmailPassword()
       }
     });
 
@@ -717,7 +731,7 @@ app.listen(PORT, () => {
 try {
   requiredEnv("STRIPE_SECRET_KEY");
   requiredEnv("EMAIL");
-  requiredEnv("EMAIL_PASS");
+  requiredOneOfEnv(["EMAIL_PASS", "EMAIL_PASSWORD"]);
   requiredEnv("MONGO_URI");
 } catch (e) {
   console.error("⚠️ Missing env var:", e.message);
