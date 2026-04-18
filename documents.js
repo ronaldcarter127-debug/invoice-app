@@ -1,14 +1,5 @@
 function getApiBaseUrl() {
-  const raw = String(localStorage.getItem("apiBaseUrl") || "").trim();
-  const fallback = "https://jobflow-api-bebm.onrender.com";
-  if (!raw) return fallback;
-  try {
-    const u = new URL(raw);
-    if (!/^https?:$/.test(u.protocol)) return fallback;
-    return u.origin;
-  } catch (_) {
-    return fallback;
-  }
+  return "https://jobflow-api-bebm.onrender.com";
 }
 
 const API_BASE_URL = getApiBaseUrl();
