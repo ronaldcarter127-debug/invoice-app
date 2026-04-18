@@ -18,7 +18,8 @@ const API_BASE_URL = (process.env.API_BASE_URL || "http://127.0.0.1:3000").repla
 const ALLOWED_ORIGINS = [
   "http://127.0.0.1:5500",
   "http://localhost:5500",
-  process.env.FRONTEND_URL
+  process.env.FRONTEND_URL,
+  process.env.CORS_ORIGIN
 ].filter(Boolean);
 
 // --- hardening helpers ---
@@ -174,7 +175,34 @@ app.post("/create-checkout-session", async (req, res) => {
   }
 });
 
-// 💾 SAVE INVOICE (upsert by invoiceNumber)
+// � PREMIUM UPGRADE CHECKOUT
+app.post("/create-premium-checkout", async (req, res) => {
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: [{
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: Number(process.env.PREMIUM_PRICE_CENTS) || 999,
+          product_data: {
+            name: "JobFlow Pro — Premium Upgrade",
+            description: "Unlock full invoice/quote history and premium features."
+          }
+        }
+      }],
+      success_url: `${APP_BASE_URL}/success.html`,
+      cancel_url: `${APP_BASE_URL}/invoice.html`
+    });
+    return res.json({ url: session.url });
+  } catch (error) {
+    console.error("create-premium-checkout error:", error.message);
+    return res.status(500).json({ error: "Premium checkout failed." });
+  }
+});
+
+// �💾 SAVE INVOICE (upsert by invoiceNumber)
 app.post("/save-invoice", async (req, res) => {
   try {
     const body = req.body || {};
