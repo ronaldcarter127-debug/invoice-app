@@ -100,7 +100,7 @@ async function refreshAllQuoteStatuses() {
   await Promise.all(quotes.map(async function (quote, i) {
     const qn = normalizeDocNumber(quote.quoteNumber);
     if (!qn) return;
-    const s = await fetchJsonWithTimeout(`${API_BASE_URL}/quote-status/${encodeURIComponent(qn)}`, 1800);
+    const s = await fetchJsonWithTimeout(`${API_BASE_URL}/quote-status/${encodeURIComponent(qn)}`, 6000);
     if (s && s.found) {
       quotes[i].status = s.status || quotes[i].status || "Pending";
       quotes[i].acceptedAt = s.acceptedAt || quotes[i].acceptedAt || null;

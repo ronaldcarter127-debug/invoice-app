@@ -640,7 +640,9 @@ app.post("/send-quote-email", async (req, res) => {
       console.warn("quote persistence warning:", quoteStoreError);
     }
 
-    const acceptUrl = `${API_BASE_URL}/accept-quote/${encodeURIComponent(quoteNumber)}`;
+    const runtimeApiBase = `${req.protocol}://${req.get("host")}`.replace(/\/+$/, "");
+    const publicApiBase = (process.env.API_BASE_URL || runtimeApiBase).replace(/\/+$/, "");
+    const acceptUrl = `${publicApiBase}/accept-quote/${encodeURIComponent(quoteNumber)}`;
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
