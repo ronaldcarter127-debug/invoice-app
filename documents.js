@@ -247,18 +247,14 @@ async function showInvoiceHistory() {
   await Promise.all(invoices.map(async function (invoice) {
     const invNum = normalizeDocNumber(invoice.invoiceNumber);
     if (!invNum) return;
-    try {
-      const r = await fetch(`${API_BASE_URL}/payment-status/${encodeURIComponent(invNum)}`);
-      if (!r.ok) return;
-      const s = await r.json();
-      if (s && s.found && s.paid) {
-        invoice.status = "Paid";
-        invoice.paidAt = s.paidAt || invoice.paidAt || null;
-        invoice.balanceDue = 0;
-      } else if (s && s.found && s.status) {
-        invoice.status = s.status;
-      }
-    } catch (_) {}
+    const s = await fetchJsonWithTimeout(`${API_BASE_URL}/payment-status/${encodeURIComponent(invNum)}`, 1800);
+    if (s && s.found && s.paid) {
+      invoice.status = "Paid";
+      invoice.paidAt = s.paidAt || invoice.paidAt || null;
+      invoice.balanceDue = 0;
+    } else if (s && s.found && s.status) {
+      invoice.status = s.status;
+    }
   }));
 
   // Save synced statuses back to localStorage
