@@ -53,6 +53,20 @@ async function readJsonSafe(response) {
   try { return JSON.parse(text); } catch (_) { return { raw: text }; }
 }
 
+async function fetchJsonWithTimeout(url, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(function () { controller.abort(); }, Number(timeoutMs) || 2000);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (_) {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // ─── invoice computed fields ──────────────────────────────────────────────────
 
 function refreshInvoiceComputedFields(invoiceData) {
@@ -83,19 +97,15 @@ function refreshAllInvoiceStatuses() {
 async function refreshAllQuoteStatuses() {
   const quotes = getStoredQuotes();
   if (!quotes.length) return;
-  for (let i = 0; i < quotes.length; i++) {
-    const qn = normalizeDocNumber(quotes[i].quoteNumber);
-    if (!qn) continue;
-    try {
-      const r = await fetch(`${API_BASE_URL}/quote-status/${encodeURIComponent(qn)}`);
-      if (!r.ok) continue;
-      const s = await r.json();
-      if (s && s.found) {
-        quotes[i].status = s.status || quotes[i].status || "Pending";
-        quotes[i].acceptedAt = s.acceptedAt || quotes[i].acceptedAt || null;
-      }
-    } catch (_) {}
-  }
+  await Promise.all(quotes.map(async function (quote, i) {
+    const qn = normalizeDocNumber(quote.quoteNumber);
+    if (!qn) return;
+    const s = await fetchJsonWithTimeout(`${API_BASE_URL}/quote-status/${encodeURIComponent(qn)}`, 1800);
+    if (s && s.found) {
+      quotes[i].status = s.status || quotes[i].status || "Pending";
+      quotes[i].acceptedAt = s.acceptedAt || quotes[i].acceptedAt || null;
+    }
+  }));
   saveStoredQuotes(quotes);
 }
 
