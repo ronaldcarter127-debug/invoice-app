@@ -195,6 +195,7 @@ function checkPaymentReturn() {
 function showDashboard() {
   document.getElementById("dashboard").style.display = "block";
   document.getElementById("appContainer").style.display = "none";
+  document.getElementById("historyView").style.display = "none";
   document.getElementById("output").innerHTML = "";
   const previewArea = document.getElementById("previewArea");
   if (previewArea) previewArea.classList.remove("show");
@@ -218,20 +219,37 @@ function updateDashboard() {
 
 function openForm(mode) {
   document.getElementById("dashboard").style.display = "none";
+  document.getElementById("historyView").style.display = "none";
   document.getElementById("appContainer").style.display = "block";
   App._dashMode = mode;
+
+  const createInvoiceBtn = document.getElementById("createInvoiceBtn");
+  const createQuoteBtn = document.getElementById("createQuoteBtn");
+  const sendQuoteConvertBtn = document.getElementById("sendQuoteConvertBtn");
+
+  if (mode === "invoice") {
+    if (createInvoiceBtn) createInvoiceBtn.style.display = "";
+    if (createQuoteBtn) createQuoteBtn.style.display = "none";
+    if (sendQuoteConvertBtn) sendQuoteConvertBtn.style.display = "none";
+  } else if (mode === "quote") {
+    if (createInvoiceBtn) createInvoiceBtn.style.display = "none";
+    if (createQuoteBtn) createQuoteBtn.style.display = "";
+    if (sendQuoteConvertBtn) sendQuoteConvertBtn.style.display = "";
+  }
 }
 
 function openInvoiceHistory() {
   if (!App.premium) { alert("Invoice History is a premium feature. Upgrade to access it."); return; }
   document.getElementById("dashboard").style.display = "none";
-  document.getElementById("appContainer").style.display = "block";
+  document.getElementById("appContainer").style.display = "none";
+  document.getElementById("historyView").style.display = "block";
   showInvoiceHistory();
 }
 
 function openQuoteHistoryDash() {
   document.getElementById("dashboard").style.display = "none";
-  document.getElementById("appContainer").style.display = "block";
+  document.getElementById("appContainer").style.display = "none";
+  document.getElementById("historyView").style.display = "block";
   showQuoteHistory("all");
 }
 

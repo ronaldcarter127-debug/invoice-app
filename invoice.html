@@ -303,18 +303,14 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 
 <div class="section">
 <h3>Actions</h3>
-<button class="primary" onclick="createDoc()">Create Invoice</button>
-<button class="secondary" onclick="createQuote()">Create Quote</button>
-<button class="utility premium-only locked" onclick="showQuoteHistory()" id="quoteHistoryBtn">Quote History (Premium)</button>
-<button class="utility premium-only locked" onclick="showInvoiceHistory()" id="invoiceHistoryBtn">Invoice History (Premium)</button>
+<button id="createInvoiceBtn" class="primary" onclick="createDoc()">Create Invoice</button>
+<button id="createQuoteBtn" class="secondary" onclick="createQuote()">Create Quote</button>
 <button class="utility" onclick="previewInvoice()">Preview Invoice</button>
 </div>
 
 <div class="actions">
-  <button type="button" onclick="showQuoteHistory('all')">Quote History</button>
-  <button type="button" onclick="sendEmail()">Send Email</button>
-  <button type="button" onclick="sendQuoteThenConvert()">Send Quote + Convert</button>
-
+  <button id="sendEmailBtn" type="button" onclick="sendEmail()">Send Email</button>
+  <button id="sendQuoteConvertBtn" type="button" onclick="sendQuoteThenConvert()">Send Quote + Convert</button>
   <button type="button" onclick="saveCurrentAsTemplate()">Save Template</button>
   <select id="templateSelect">
     <option value="">Select Template</option>
@@ -325,7 +321,12 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 <button onclick="resetApp()" class="danger">Reset App</button>
 </div>
 
-<div id="output"></div>
+<div id="historyView" style="display:none;">
+  <div class="card">
+    <button class="dash-back" onclick="showDashboard()">&#8592; Dashboard</button>
+    <div id="output"></div>
+  </div>
+</div>
 
 <div class="preview" id="previewArea"></div>
 
