@@ -298,6 +298,34 @@ window.onload = function() {
     setVal("address", c ? (c.address || "") : "");
   }
 
+  function saveCurrentCustomer() {
+    const name = val("customer");
+    if (!name) return alert("Customer name is required.");
+
+    const record = {
+      name: name,
+      phone: val("contact"),
+      email: val("customerEmail"), // ✅ save email
+      address: val("address")
+    };
+
+    const list = readCustomers();
+    const idx = list.findIndex(function(c) {
+      return String(c && c.name || "").trim().toLowerCase() === name.toLowerCase();
+    });
+
+    if (idx >= 0) list[idx] = record;
+    else list.push(record);
+
+    writeCustomers(list);
+    refreshSavedCustomersDropdown();
+
+    const sel = document.getElementById("savedCustomers");
+    if (sel) sel.value = String(idx >= 0 ? idx : list.length - 1);
+
+    loadSavedCustomer();
+  }
+
   window.saveCurrentCustomer = saveCurrentCustomer;
   window.loadSavedCustomer = loadSavedCustomer;
   window.refreshSavedCustomersDropdown = refreshSavedCustomersDropdown;
