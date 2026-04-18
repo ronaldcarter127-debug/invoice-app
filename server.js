@@ -56,6 +56,17 @@ function getEmailPassword() {
   return String(process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD || "").replace(/\s+/g, "");
 }
 
+function withTimeout(promise, timeoutMs, message) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(function () {
+        reject(new Error(message || "Operation timed out."));
+      }, Number(timeoutMs) || 1000);
+    })
+  ]);
+}
+
 // ⚠️ Webhook must use raw body — before express.json()
 app.post("/webhook", express.raw({ type: "application/json" }), async (req, res) => {
   const sig = req.headers["stripe-signature"];
@@ -490,14 +501,28 @@ app.get("/accept-quote/:quoteNumber", async (req, res) => {
     const quoteNumber = cleanText(req.params.quoteNumber, 80);
     if (!quoteNumber) return res.status(400).send("Missing quote number.");
 
-    await Quote.updateOne(
-      { quoteNumber },
-      { $set: { status: "Accepted", acceptedAt: new Date() } },
-      { upsert: false }
-    );
+    let dbUpdated = true;
+    try {
+      await withTimeout(
+        Quote.updateOne(
+          { quoteNumber },
+          { $set: { status: "Accepted", acceptedAt: new Date() } },
+          { upsert: false }
+        ),
+        900,
+        "Quote acceptance DB timeout."
+      );
+    } catch (dbErr) {
+      dbUpdated = false;
+      console.warn("accept-quote warning:", dbErr.message);
+    }
 
-    return res.redirect(`${APP_BASE_URL}/quote-accepted.html?quote=${encodeURIComponent(quoteNumber)}`);
+    return res.redirect(`${APP_BASE_URL}/quote-accepted.html?quote=${encodeURIComponent(quoteNumber)}&db=${dbUpdated ? "1" : "0"}`);
   } catch (e) {
+    const quoteNumber = cleanText(req.params.quoteNumber, 80);
+    if (quoteNumber) {
+      return res.redirect(`${APP_BASE_URL}/quote-accepted.html?quote=${encodeURIComponent(quoteNumber)}&db=0`);
+    }
     return res.status(500).send("Unable to accept quote.");
   }
 });
@@ -534,26 +559,30 @@ app.post("/send-quote-email", async (req, res) => {
     let quoteStored = true;
     let quoteStoreError = "";
     try {
-      await Quote.updateOne(
-        { quoteNumber },
-        {
-          $set: {
-            quoteNumber,
-            email: to,
-            customer,
-            businessName,
-            date,
-            notes,
-            items,
-            total,
-            taxAmount,
-            finalTotal,
-            balanceDue,
-            status: "Pending"
+      await withTimeout(
+        Quote.updateOne(
+          { quoteNumber },
+          {
+            $set: {
+              quoteNumber,
+              email: to,
+              customer,
+              businessName,
+              date,
+              notes,
+              items,
+              total,
+              taxAmount,
+              finalTotal,
+              balanceDue,
+              status: "Pending"
+            },
+            $setOnInsert: { created: new Date() }
           },
-          $setOnInsert: { created: new Date() }
-        },
-        { upsert: true }
+          { upsert: true }
+        ),
+        900,
+        "Quote save DB timeout."
       );
     } catch (dbErr) {
       quoteStored = false;

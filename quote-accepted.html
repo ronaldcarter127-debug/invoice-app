@@ -17,6 +17,7 @@
     <div style="font-size:48px;margin-bottom:12px;">✅</div>
     <h2>Quote Accepted!</h2>
     <p>Thank you. Your acceptance has been recorded.</p>
+    <p id="syncNote" style="display:none;color:#fbbf24;font-size:12px;"></p>
     <p id="quoteRef" style="color:#6b7280;font-size:13px;"></p>
     <a href="invoice.html">Back to App</a>
   </div>
@@ -24,6 +25,14 @@
   (function () {
     const params = new URLSearchParams(window.location.search);
     const quoteNumber = String(params.get("quote") || "").trim();
+    const dbUpdated = String(params.get("db") || "1") === "1";
+    if (!dbUpdated) {
+      const noteEl = document.getElementById("syncNote");
+      if (noteEl) {
+        noteEl.style.display = "block";
+        noteEl.textContent = "Saved locally. Server sync may take a moment.";
+      }
+    }
     if (quoteNumber) {
       document.getElementById("quoteRef").textContent = "Quote #" + quoteNumber;
       // Sync accepted status into localStorage so app reflects it immediately
