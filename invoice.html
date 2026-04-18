@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JobFlow Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Allura&family=Alex+Brush&display=swap" rel="stylesheet">
 
@@ -71,26 +72,57 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 .status-unpaid {background:#6b7280;color:white;}
 .status-overdue {background:#ef4444;color:white;}
 @media (max-width: 768px) {
-  .card {padding:15px;margin:10px;}
-  .section {padding:12px;margin-bottom:20px;}
-  .invoice-box {padding:15px;margin:10px;}
-  .invoice-header {flex-direction:column;text-align:center;border-bottom:1px solid #00ee58;padding-bottom:15px;}
-  .business-info {max-width:100%;text-align:center;margin-bottom:15px;}
-  .business-info h1 {font-size:24px;margin-bottom:10px;}
-  .business-info p {font-size:13px;}
+  body {padding:10px;}
+  .card {padding:12px;margin:0 0 12px 0;border-radius:10px;}
+  .section {padding:12px;margin-bottom:12px;}
+  .section h3 {font-size:16px;}
+
+  /* Inputs & buttons full-width */
+  input, textarea, select {font-size:16px;padding:10px;margin-top:6px;width:100%;box-sizing:border-box;}
+  button {font-size:15px;padding:12px;margin-top:6px;width:100%;box-sizing:border-box;cursor:pointer;}
+  .primary {font-size:17px;padding:14px;}
+
+  /* Business info stack vertically */
+  div[style*="display:flex;gap:15px"] {flex-direction:column !important;gap:10px !important;}
+  div[style*="flex:0 0 150px"] {flex:unset !important;width:100% !important;}
+  div[style*="flex:0 0 200px"] {flex:unset !important;width:100% !important;}
+
+  /* Line item rows: stack service on top, qty+price side by side */
+  .item-columns {display:none;}
+  .item-row {display:grid;grid-template-columns:1fr 80px 100px;gap:6px;margin-bottom:10px;}
+  .item-row input:first-child {grid-column:1 / -1;flex:unset;}
+  .item-row input[type="number"] {flex:unset;}
+  .item-row input[type="number"]:last-child {flex:unset;}
+  .item-row button {grid-column:1 / -1;padding:8px;font-size:13px;}
+
+  /* Totals */
+  .totals {text-align:left;font-size:15px;}
+  .totals .total {font-size:22px;}
+
+  /* Invoice/quote preview */
+  .invoice-box {padding:15px;margin:10px 0;border-radius:10px;}
+  .invoice-box h2 {font-size:22px;}
+  .invoice-header {flex-direction:column;text-align:center;padding-bottom:12px;}
+  .business-info {max-width:100%;text-align:center;margin-bottom:12px;}
+  .business-info h1 {font-size:22px;}
   .invoice-meta {text-align:center;}
-  .invoice-meta h2 {font-size:20px;}
-  .invoice-table {font-size:14px;}
-  .invoice-table th, .invoice-table td {padding:6px 3px;}
-  .total-col {text-align:right;}
-  .bill-to-section {margin:20px 0;}
+  .invoice-meta h2 {font-size:18px;}
+  .invoice-table {font-size:13px;}
+  .invoice-table th, .invoice-table td {padding:6px 4px;}
   .bill-to-section h3 {font-size:16px;}
-  .totals-section {margin:25px 0;text-align:left;}
-  input, textarea, select, button {font-size:16px;padding:10px;margin:5px 0;width:100%;box-sizing:border-box;}
-  .primary, .secondary {width:100%;margin:5px 0;}
+  .totals-section {text-align:left;}
+
+  /* History entries */
+  .quote-entry {flex-direction:column;align-items:flex-start;gap:10px;}
+  .quote-entry > span:last-child, .quote-entry > div:last-child {display:flex;gap:8px;width:100%;}
+  .quote-entry button {width:auto;flex:1;margin-top:0;}
+
+  /* Status badges */
   .status-badge {font-size:11px;padding:3px 8px;}
-  #buttons {display:flex;flex-direction:column;gap:10px;}
-  #buttons button {width:100%;}
+
+  /* History tabs */
+  .history-tabs {display:flex;gap:8px;margin-bottom:12px;}
+  .history-tab {flex:1;padding:10px;font-size:14px;}
 }
 </style>
 
@@ -215,7 +247,7 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 </div>
 
 <div class="actions">
-  <button type="button" onclick="showQuoteHistory('accepted')">Accepted Quotes</button>
+  <button type="button" onclick="showQuoteHistory('all')">Quote History</button>
   <button type="button" onclick="sendEmail()">Send Email</button>
   <button type="button" onclick="sendQuoteThenConvert()">Send Quote + Convert</button>
 

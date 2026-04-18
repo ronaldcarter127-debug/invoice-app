@@ -217,13 +217,41 @@ async function showQuoteHistory(filter) {
 
 function showAcceptedQuotes() { return showQuoteHistory("accepted"); }
 
-function showInvoiceHistory() {
+async function showInvoiceHistory() {
   if (!App.premium) {
     alert("Invoice History is a premium feature.");
     return;
   }
-  const invoices = refreshAllInvoiceStatuses();
+  let invoices = refreshAllInvoiceStatuses();
   if (!invoices.length) { alert("No previous invoices found."); return; }
+
+  // Sync payment status from server for each invoice
+  await Promise.all(invoices.map(async function (invoice) {
+    const invNum = normalizeDocNumber(invoice.invoiceNumber);
+    if (!invNum) return;
+    try {
+      const r = await fetch(`${API_BASE_URL}/payment-status/${encodeURIComponent(invNum)}`);
+      if (!r.ok) return;
+      const s = await r.json();
+      if (s && s.found && s.paid) {
+        invoice.status = "Paid";
+        invoice.paidAt = s.paidAt || invoice.paidAt || null;
+        invoice.balanceDue = 0;
+      } else if (s && s.found && s.status) {
+        invoice.status = s.status;
+      }
+    } catch (_) {}
+  }));
+
+  // Save synced statuses back to localStorage
+  const stored = getStoredInvoices();
+  invoices.forEach(function (inv) {
+    const idx = stored.findIndex(function (s) {
+      return normalizeDocNumber(s.invoiceNumber) === normalizeDocNumber(inv.invoiceNumber);
+    });
+    if (idx !== -1) stored[idx] = Object.assign(stored[idx], { status: inv.status, balanceDue: inv.balanceDue, paidAt: inv.paidAt });
+  });
+  localStorage.setItem("invoiceHistory", JSON.stringify(stored));
 
   let html = "<div class='invoice-box'><h2>Invoice History</h2>";
   invoices.slice().reverse().forEach(function (invoice) {
