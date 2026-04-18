@@ -67,6 +67,30 @@ function withTimeout(promise, timeoutMs, message) {
   ]);
 }
 
+const transientQuoteStatus = new Map();
+
+function setTransientQuoteStatus(quoteNumber, status, acceptedAt) {
+  const key = cleanText(quoteNumber, 80);
+  if (!key) return;
+  transientQuoteStatus.set(key, {
+    status: cleanText(status || "Pending", 40),
+    acceptedAt: acceptedAt || null,
+    expiresAt: Date.now() + (24 * 60 * 60 * 1000)
+  });
+}
+
+function getTransientQuoteStatus(quoteNumber) {
+  const key = cleanText(quoteNumber, 80);
+  if (!key) return null;
+  const value = transientQuoteStatus.get(key);
+  if (!value) return null;
+  if (Number(value.expiresAt || 0) <= Date.now()) {
+    transientQuoteStatus.delete(key);
+    return null;
+  }
+  return value;
+}
+
 // ⚠️ Webhook must use raw body — before express.json()
 app.post("/webhook", express.raw({ type: "application/json" }), async (req, res) => {
   const sig = req.headers["stripe-signature"];
@@ -480,10 +504,27 @@ app.post("/save-quote", async (req, res) => {
 
 // Quote status for app sync
 app.get("/quote-status/:quoteNumber", async (req, res) => {
+  const quoteNumber = cleanText(req.params.quoteNumber, 80);
+  const transient = getTransientQuoteStatus(quoteNumber);
   try {
-    const quoteNumber = cleanText(req.params.quoteNumber, 80);
-    const q = await Quote.findOne({ quoteNumber }).lean();
-    if (!q) return res.json({ found: false, accepted: false, status: "Pending" });
+    const q = await withTimeout(
+      Quote.findOne({ quoteNumber }).lean(),
+      1200,
+      "Quote status DB timeout."
+    );
+    if (!q) {
+      if (transient) {
+        const tStatus = transient.status || "Pending";
+        return res.json({
+          found: true,
+          accepted: String(tStatus).toLowerCase() === "accepted",
+          status: tStatus,
+          acceptedAt: transient.acceptedAt || null,
+          source: "transient"
+        });
+      }
+      return res.json({ found: false, accepted: false, status: "Pending" });
+    }
     return res.json({
       found: true,
       accepted: String(q.status || "").toLowerCase() === "accepted",
@@ -491,6 +532,16 @@ app.get("/quote-status/:quoteNumber", async (req, res) => {
       acceptedAt: q.acceptedAt || null
     });
   } catch (e) {
+    if (transient) {
+      const tStatus = transient.status || "Pending";
+      return res.json({
+        found: true,
+        accepted: String(tStatus).toLowerCase() === "accepted",
+        status: tStatus,
+        acceptedAt: transient.acceptedAt || null,
+        source: "transient"
+      });
+    }
     return res.status(500).json({ found: false, accepted: false, error: e.message });
   }
 });
@@ -501,23 +552,22 @@ app.get("/accept-quote/:quoteNumber", async (req, res) => {
     const quoteNumber = cleanText(req.params.quoteNumber, 80);
     if (!quoteNumber) return res.status(400).send("Missing quote number.");
 
-    let dbUpdated = true;
-    try {
-      await withTimeout(
-        Quote.updateOne(
-          { quoteNumber },
-          { $set: { status: "Accepted", acceptedAt: new Date() } },
-          { upsert: false }
-        ),
-        900,
-        "Quote acceptance DB timeout."
-      );
-    } catch (dbErr) {
-      dbUpdated = false;
-      console.warn("accept-quote warning:", dbErr.message);
-    }
+    const acceptedAt = new Date();
+    setTransientQuoteStatus(quoteNumber, "Accepted", acceptedAt.toISOString());
 
-    return res.redirect(`${APP_BASE_URL}/quote-accepted.html?quote=${encodeURIComponent(quoteNumber)}&db=${dbUpdated ? "1" : "0"}`);
+    withTimeout(
+      Quote.updateOne(
+        { quoteNumber },
+        { $set: { status: "Accepted", acceptedAt } },
+        { upsert: true }
+      ),
+      1800,
+      "Quote acceptance DB timeout."
+    ).catch(function (dbErr) {
+      console.warn("accept-quote warning:", dbErr.message);
+    });
+
+    return res.redirect(`${APP_BASE_URL}/quote-accepted.html?quote=${encodeURIComponent(quoteNumber)}&db=1`);
   } catch (e) {
     const quoteNumber = cleanText(req.params.quoteNumber, 80);
     if (quoteNumber) {
