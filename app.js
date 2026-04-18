@@ -192,10 +192,23 @@ function checkPaymentReturn() {
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
+function showOutputView() {
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("appContainer").style.display = "none";
+  document.getElementById("historyView").style.display = "block";
+  document.getElementById("settingsView").style.display = "none";
+  document.getElementById("customerListView").style.display = "none";
+  window.scrollTo(0, 0);
+}
+
+window.showOutputView = showOutputView;
+
 function showDashboard() {
   document.getElementById("dashboard").style.display = "block";
   document.getElementById("appContainer").style.display = "none";
   document.getElementById("historyView").style.display = "none";
+  document.getElementById("settingsView").style.display = "none";
+  document.getElementById("customerListView").style.display = "none";
   document.getElementById("output").innerHTML = "";
   const previewArea = document.getElementById("previewArea");
   if (previewArea) previewArea.classList.remove("show");
@@ -243,6 +256,8 @@ function openInvoiceHistory() {
   document.getElementById("dashboard").style.display = "none";
   document.getElementById("appContainer").style.display = "none";
   document.getElementById("historyView").style.display = "block";
+  document.getElementById("settingsView").style.display = "none";
+  document.getElementById("customerListView").style.display = "none";
   showInvoiceHistory();
 }
 
@@ -250,8 +265,64 @@ function openQuoteHistoryDash() {
   document.getElementById("dashboard").style.display = "none";
   document.getElementById("appContainer").style.display = "none";
   document.getElementById("historyView").style.display = "block";
+  document.getElementById("settingsView").style.display = "none";
+  document.getElementById("customerListView").style.display = "none";
   showQuoteHistory("all");
 }
+
+function openSettings() {
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("appContainer").style.display = "none";
+  document.getElementById("historyView").style.display = "none";
+  document.getElementById("settingsView").style.display = "block";
+  document.getElementById("customerListView").style.display = "none";
+  loadBusinessInfo();
+  updateLogoPreview(localStorage.getItem("businessLogo"));
+}
+
+function openCustomerList() {
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("appContainer").style.display = "none";
+  document.getElementById("historyView").style.display = "none";
+  document.getElementById("settingsView").style.display = "none";
+  document.getElementById("customerListView").style.display = "block";
+  renderCustomerList();
+}
+
+function renderCustomerList() {
+  const out = document.getElementById("customerListOutput");
+  if (!out) return;
+  const customers = getSavedCustomersListSafe();
+  if (!customers.length) {
+    out.innerHTML = "<p style='color:#6b7280;'>No saved customers yet.</p>";
+    return;
+  }
+  let html = "";
+  customers.forEach(function (c, i) {
+    html += "<div class='quote-entry'>";
+    html += "<div><strong>" + escapeHtml(c.name || "No name") + "</strong><br>";
+    if (c.phone) html += "<span style='color:#6b7280;font-size:13px;'>" + escapeHtml(c.phone) + "</span><br>";
+    if (c.email) html += "<span style='color:#6b7280;font-size:13px;'>" + escapeHtml(c.email) + "</span>";
+    html += "</div>";
+    html += "<div style='display:flex;gap:8px;'>";
+    html += "<button onclick='deleteCustomerByIndex(" + i + ")' style='background:#dc2626;color:white;border:none;border-radius:6px;padding:8px 12px;cursor:pointer;'>Delete</button>";
+    html += "</div></div>";
+  });
+  out.innerHTML = html;
+}
+
+function deleteCustomerByIndex(index) {
+  const list = getSavedCustomersListSafe();
+  list.splice(index, 1);
+  setSavedCustomersListSafe(list);
+  refreshSavedCustomersDropdown();
+  renderCustomerList();
+}
+
+window.openSettings = openSettings;
+window.openCustomerList = openCustomerList;
+window.renderCustomerList = renderCustomerList;
+window.deleteCustomerByIndex = deleteCustomerByIndex;
 
 window.showDashboard = showDashboard;
 window.openForm = openForm;

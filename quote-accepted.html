@@ -1,8 +1,45 @@
 <!doctype html>
 <html>
-<head><meta charset="utf-8"><title>Quote Accepted</title></head>
-<body style="font-family:Arial;padding:24px;">
-  <h2>✅ Quote accepted</h2>
-  <p>Thank you. Your acceptance has been recorded.</p>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quote Accepted</title>
+  <style>
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#0b1220;color:white;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px;box-sizing:border-box;}
+    .card{background:#111827;border-radius:14px;padding:40px 32px;text-align:center;max-width:420px;width:100%;border:2px solid #00ee58;}
+    h2{color:#00ee58;font-size:28px;margin:0 0 12px;}
+    p{color:#cbd5e1;margin:8px 0;}
+    a{display:inline-block;margin-top:20px;padding:12px 24px;background:#00ee58;color:black;border-radius:8px;text-decoration:none;font-weight:700;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div style="font-size:48px;margin-bottom:12px;">✅</div>
+    <h2>Quote Accepted!</h2>
+    <p>Thank you. Your acceptance has been recorded.</p>
+    <p id="quoteRef" style="color:#6b7280;font-size:13px;"></p>
+    <a href="invoice.html">Back to App</a>
+  </div>
+  <script>
+  (function () {
+    const params = new URLSearchParams(window.location.search);
+    const quoteNumber = String(params.get("quote") || "").trim();
+    if (quoteNumber) {
+      document.getElementById("quoteRef").textContent = "Quote #" + quoteNumber;
+      // Sync accepted status into localStorage so app reflects it immediately
+      try {
+        const quotes = JSON.parse(localStorage.getItem("quoteHistory") || "[]");
+        const idx = quotes.findIndex(function(q) {
+          return String(q.quoteNumber || "").trim() === quoteNumber;
+        });
+        if (idx !== -1) {
+          quotes[idx].status = "Accepted";
+          quotes[idx].acceptedAt = new Date().toISOString();
+          localStorage.setItem("quoteHistory", JSON.stringify(quotes));
+        }
+      } catch (_) {}
+    }
+  })();
+  </script>
 </body>
 </html>

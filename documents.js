@@ -119,8 +119,8 @@ function createQuote() {
   setInvoiceEditingLocked(false, "");
   saveQuote(data);
   renderDocument("Quote", data, true);
-  alert("Quote #" + data.quoteNumber + " saved for later invoicing.");
   resetEntryFieldsAfterCreate();
+  showOutputView();
 }
 
 function createDoc() {
@@ -137,6 +137,7 @@ function createDoc() {
   saveInvoice(data);
   renderDocument("Invoice", data, false);
   resetEntryFieldsAfterCreate();
+  showOutputView();
 }
 
 function convertQuoteToInvoice(quoteData) {
@@ -173,6 +174,8 @@ function markInvoiceAsPaid(invoiceData) {
 // ─── history ──────────────────────────────────────────────────────────────────
 
 async function showQuoteHistory(filter) {
+  if (typeof showSpinner === "function") showSpinner("Loading quotes...");
+  try {
   await refreshAllQuoteStatuses();
   const normalizedFilter = String(filter || "all").toLowerCase();
   const quotes = getStoredQuotes();
@@ -213,6 +216,9 @@ async function showQuoteHistory(filter) {
 
   html += "</div>";
   displayInvoice(html);
+  } finally {
+    if (typeof hideSpinner === "function") hideSpinner();
+  }
 }
 
 function showAcceptedQuotes() { return showQuoteHistory("accepted"); }
@@ -222,8 +228,10 @@ async function showInvoiceHistory() {
     alert("Invoice History is a premium feature.");
     return;
   }
+  if (typeof showSpinner === "function") showSpinner("Syncing invoices...");
+  try {
   let invoices = refreshAllInvoiceStatuses();
-  if (!invoices.length) { alert("No previous invoices found."); return; }
+  if (!invoices.length) { displayInvoice("<div class='invoice-box'><p>No invoices found.</p></div>"); return; }
 
   // Sync payment status from server for each invoice
   await Promise.all(invoices.map(async function (invoice) {
@@ -265,6 +273,9 @@ async function showInvoiceHistory() {
   });
   html += "</div>";
   displayInvoice(html);
+  } finally {
+    if (typeof hideSpinner === "function") hideSpinner();
+  }
 }
 
 // ─── load / delete ────────────────────────────────────────────────────────────
@@ -476,6 +487,7 @@ async function sendEmail(toOverride) {
     ? `${API_BASE_URL}/send-quote-email`
     : `${API_BASE_URL}/send-email`;
 
+  if (typeof showSpinner === "function") showSpinner("Sending email...");
   try {
     const response = await fetch(endpoint, {
       method: "POST",
@@ -508,6 +520,8 @@ async function sendEmail(toOverride) {
   } catch (err) {
     alert("API request failed: " + endpoint + "\n" + String(err && err.message || "Email send failed."));
     return false;
+  } finally {
+    if (typeof hideSpinner === "function") hideSpinner();
   }
 }
 

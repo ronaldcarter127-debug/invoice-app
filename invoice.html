@@ -189,6 +189,18 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
       <div class="dash-sub">View past quotes</div>
     </div>
   </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
+    <div class="dash-card" onclick="openCustomerList()">
+      <div class="dash-icon">👥</div>
+      <div class="dash-label">Customers</div>
+      <div class="dash-sub">View &amp; manage</div>
+    </div>
+    <div class="dash-card" onclick="openSettings()">
+      <div class="dash-icon">⚙️</div>
+      <div class="dash-label">Business Info</div>
+      <div class="dash-sub">Logo, name, contact</div>
+    </div>
+  </div>
   <button id="upgradeBtn" class="upgrade-btn" style="width:100%;margin-top:14px;" onclick="upgrade()">Upgrade to Premium</button>
 </div>
 
@@ -199,47 +211,6 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 <div id="modeBanner" class="mode-banner">
   <strong id="planBadge">Free Plan</strong>
   <span id="planMessage">Create invoices and quotes. Upgrade to unlock history and premium export features.</span>
-</div>
-
-<div class="section">
-<h3>Business Info</h3>
-<div style="display:flex;gap:15px;align-items:flex-start;">
-<div style="flex:1;">
-<input id="businessName" placeholder="Your Business Name" value="Your Business Name" onblur="saveBusinessInfo()">
-<input id="businessAddress" placeholder="123 Main St, Murfreesboro, TN" value="123 Main St, Murfreesboro, TN" onblur="saveBusinessInfo()">
-<input id="businessPhone" placeholder="615-XXX-XXXX" value="615-XXX-XXXX" onblur="saveBusinessInfo()">
-<input id="businessEmail" placeholder="you@email.com" value="you@email.com" onblur="saveBusinessInfo()">
-<input id="businessStripeUrl" placeholder="Stripe Checkout Link (optional)" onblur="saveBusinessInfo()">
-<input id="businessLicense" placeholder="License Number (optional)" onblur="saveBusinessInfo()">
-<button onclick="saveBusinessInfo()" style="margin-top:10px;padding:8px 16px;background:#00ee58;color:black;border:none;border-radius:6px;font-weight:bold;">Save Business Info</button>
-</div>
-<div style="flex:0 0 150px;">
-<label for="logoUpload" style="display:block;margin-bottom:8px;font-weight:bold;color:#00ee58;">Company Logo:</label>
-<input type="file" id="logoUpload" accept="image/*" onchange="handleLogoUpload(event)" style="margin-bottom:8px;">
-<div id="logoPreview" style="border:2px dashed #374151;padding:10px;text-align:center;border-radius:6px;min-height:60px;display:flex;align-items:center;justify-content:center;">
-<span style="color:#6b7280;font-size:12px;">No logo uploaded</span>
-</div>
-<label for="logoSize" style="display:block;margin-top:8px;margin-bottom:4px;font-weight:bold;color:#00ee58;font-size:12px;">Logo Size:</label>
-<input type="range" id="logoSize" min="30" max="150" value="50" oninput="updateLogoSize()" style="width:100%;">
-<span id="logoSizeValue" style="font-size:11px;color:#6b7280;">50px</span>
-<label for="logoCrop" style="display:block;margin-top:8px;margin-bottom:4px;font-weight:bold;color:#00ee58;font-size:12px;">Logo Position:</label>
-<select id="logoCrop" onchange="updateLogoCrop()" style="width:100%;padding:4px;border:1px solid #374151;border-radius:4px;background:#1f2937;color:white;font-size:12px;">
-  <option value="center">Center</option>
-  <option value="top">Top</option>
-  <option value="bottom">Bottom</option>
-  <option value="left">Left</option>
-  <option value="right">Right</option>
-  <option value="top left">Top Left</option>
-  <option value="top right">Top Right</option>
-  <option value="bottom left">Bottom Left</option>
-  <option value="bottom right">Bottom Right</option>
-</select>
-</div>
-<div style="flex:0 0 200px;">
-<label style="display:block;margin-bottom:8px;font-weight:bold;color:#00ee58;">Signature Name:</label>
-<input id="businessSignatureName" placeholder="Type your name for signature" onblur="saveBusinessInfo()" style="width:100%;padding:8px;border:1px solid #374151;border-radius:6px;background:#1f2937;color:white;">
-</div>
-</div>
 </div>
 
 <div class="section">
@@ -328,7 +299,71 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
   </div>
 </div>
 
+<!-- Loading spinner -->
+<div id="spinner" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:14px;">
+  <div style="width:48px;height:48px;border:5px solid #374151;border-top-color:#00ee58;border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+  <div id="spinnerMsg" style="color:#f1f5f9;font-size:15px;font-weight:600;">Loading...</div>
+</div>
+<style>
+@keyframes spin{to{transform:rotate(360deg);}}
+@media print {
+  body > *:not(#historyView) { display: none !important; }
+  #historyView { display: block !important; }
+  #historyView .dash-back, #historyView #buttons, #historyView button { display: none !important; }
+  .invoice-box { box-shadow: none !important; border: none !important; }
+}
+</style>
+
 <div class="preview" id="previewArea"></div>
+
+<!-- ── SETTINGS VIEW ── -->
+<div id="settingsView" style="display:none;">
+  <div class="card">
+    <button class="dash-back" onclick="showDashboard()">&#8592; Dashboard</button>
+    <h2 style="margin:0 0 14px;">Business Info</h2>
+    <div class="section">
+      <input id="businessName" placeholder="Business Name" onblur="saveBusinessInfo()">
+      <input id="businessAddress" placeholder="Address" onblur="saveBusinessInfo()">
+      <input id="businessPhone" placeholder="Phone" onblur="saveBusinessInfo()">
+      <input id="businessEmail" placeholder="Email" onblur="saveBusinessInfo()">
+      <input id="businessStripeUrl" placeholder="Stripe Checkout Link (optional)" onblur="saveBusinessInfo()">
+      <input id="businessLicense" placeholder="License Number (optional)" onblur="saveBusinessInfo()">
+      <input id="businessSignatureName" placeholder="Signature Name" onblur="saveBusinessInfo()">
+    </div>
+    <div class="section">
+      <h3>Logo</h3>
+      <input type="file" id="logoUpload" accept="image/*" onchange="handleLogoUpload(event)">
+      <div id="logoPreview" style="border:2px dashed #374151;padding:10px;text-align:center;border-radius:6px;min-height:60px;display:flex;align-items:center;justify-content:center;margin-top:8px;">
+        <span style="color:#6b7280;font-size:12px;">No logo uploaded</span>
+      </div>
+      <label style="display:block;margin-top:10px;color:#00ee58;font-size:13px;">Logo Size:</label>
+      <input type="range" id="logoSize" min="30" max="150" value="50" oninput="updateLogoSize()" style="width:100%;">
+      <span id="logoSizeValue" style="font-size:11px;color:#6b7280;">50px</span>
+      <label style="display:block;margin-top:10px;color:#00ee58;font-size:13px;">Logo Position:</label>
+      <select id="logoCrop" onchange="updateLogoCrop()">
+        <option value="center">Center</option>
+        <option value="top">Top</option>
+        <option value="bottom">Bottom</option>
+        <option value="left">Left</option>
+        <option value="right">Right</option>
+        <option value="top left">Top Left</option>
+        <option value="top right">Top Right</option>
+        <option value="bottom left">Bottom Left</option>
+        <option value="bottom right">Bottom Right</option>
+      </select>
+    </div>
+    <button onclick="saveBusinessInfo();alert('Saved!');" class="primary">Save Business Info</button>
+  </div>
+</div>
+
+<!-- ── CUSTOMER LIST VIEW ── -->
+<div id="customerListView" style="display:none;">
+  <div class="card">
+    <button class="dash-back" onclick="showDashboard()">&#8592; Dashboard</button>
+    <h2 style="margin:0 0 14px;">Customers</h2>
+    <div id="customerListOutput"></div>
+  </div>
+</div>
 
 <script src="calculator.js"></script>
 <script src="dom.js"></script>

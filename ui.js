@@ -1,7 +1,19 @@
-async function upgrade() {
-  try {
-    const apiBase = (typeof getApiBaseUrl === "function" ? getApiBaseUrl() : "https://jobflow-api-bebm.onrender.com");
-    const res = await fetch(apiBase + "/create-premium-checkout", {
+function showSpinner(msg) {
+  const el = document.getElementById("spinner");
+  if (!el) return;
+  document.getElementById("spinnerMsg").textContent = msg || "Loading...";
+  el.style.display = "flex";
+}
+
+function hideSpinner() {
+  const el = document.getElementById("spinner");
+  if (el) el.style.display = "none";
+}
+
+window.showSpinner = showSpinner;
+window.hideSpinner = hideSpinner;
+
+function checkPremium() {
       method: "POST",
       headers: { "Content-Type": "application/json" }
     });
@@ -493,48 +505,7 @@ function toAmount(value) {
 }
 
 function downloadPDF() {
-  const printArea = document.getElementById("printArea");
-  if (!printArea) {
-    window.print();
-    return;
-  }
-
-  const w = window.open("", "_blank", "width=1000,height=800");
-  if (!w) {
-    alert("Pop-up blocked. Please allow pop-ups to print PDF.");
-    return;
-  }
-
-  const html = `
-    <!doctype html>
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <title>Document</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
-          .invoice-box { max-width: 900px; margin: 0 auto; }
-          table { width: 100%; border-collapse: collapse; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background: #f8fafc; }
-          .total-col { text-align: right; }
-          #buttons { display: none !important; }
-          button { display: none !important; }
-        </style>
-      </head>
-      <body>${printArea.outerHTML}</body>
-    </html>
-  `;
-
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-
-  w.focus();
-  setTimeout(function () {
-    w.print();
-    w.close();
-  }, 250);
+  window.print();
 }
 
 window.downloadPDF = downloadPDF;
