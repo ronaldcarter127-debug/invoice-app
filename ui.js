@@ -13,7 +13,10 @@ function hideSpinner() {
 window.showSpinner = showSpinner;
 window.hideSpinner = hideSpinner;
 
-function checkPremium() {
+async function upgrade() {
+  try {
+    const apiBase = (typeof getApiBaseUrl === "function" ? getApiBaseUrl() : "https://jobflow-api-bebm.onrender.com");
+    const res = await fetch(apiBase + "/create-premium-checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" }
     });
