@@ -531,27 +531,35 @@ app.post("/send-quote-email", async (req, res) => {
       return res.status(400).json({ sent: false, error: "quoteNumber is required." });
     }
 
-    await Quote.updateOne(
-      { quoteNumber },
-      {
-        $set: {
-          quoteNumber,
-          email: to,
-          customer,
-          businessName,
-          date,
-          notes,
-          items,
-          total,
-          taxAmount,
-          finalTotal,
-          balanceDue,
-          status: "Pending"
+    let quoteStored = true;
+    let quoteStoreError = "";
+    try {
+      await Quote.updateOne(
+        { quoteNumber },
+        {
+          $set: {
+            quoteNumber,
+            email: to,
+            customer,
+            businessName,
+            date,
+            notes,
+            items,
+            total,
+            taxAmount,
+            finalTotal,
+            balanceDue,
+            status: "Pending"
+          },
+          $setOnInsert: { created: new Date() }
         },
-        $setOnInsert: { created: new Date() }
-      },
-      { upsert: true }
-    );
+        { upsert: true }
+      );
+    } catch (dbErr) {
+      quoteStored = false;
+      quoteStoreError = dbErr && dbErr.message ? dbErr.message : "Quote persistence failed.";
+      console.warn("quote persistence warning:", quoteStoreError);
+    }
 
     const acceptUrl = `${API_BASE_URL}/accept-quote/${encodeURIComponent(quoteNumber)}`;
 
@@ -694,7 +702,7 @@ app.post("/send-quote-email", async (req, res) => {
       `
     });
 
-    return res.json({ sent: true });
+    return res.json({ sent: true, quoteStored, quoteStoreError });
   } catch (e) {
     console.error("send-quote-email error:", e.message);
     return res.status(500).json({ sent: false, error: e.message || "Quote email failed." });
