@@ -675,3 +675,14 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`API running on port ${PORT}`);
 });
+
+// startup checks AFTER listen
+try {
+  requiredEnv("STRIPE_SECRET_KEY");
+  requiredEnv("EMAIL");
+  requiredEnv("EMAIL_PASS");
+  requiredEnv("MONGO_URI");
+} catch (e) {
+  console.error("⚠️ Missing env var:", e.message);
+  // do not process.exit in production — log and continue
+}
