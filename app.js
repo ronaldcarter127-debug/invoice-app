@@ -329,7 +329,5 @@ window.onload = function() {
   window.saveCurrentCustomer = saveCurrentCustomer;
   window.loadSavedCustomer = loadSavedCustomer;
   window.refreshSavedCustomersDropdown = refreshSavedCustomersDropdown;
-  window.loadSavedCustomers = refreshSavedCustomersDropdown; // ✅ compatibility alias
 
-  document.addEventListener("DOMContentLoaded", refreshSavedCustomersDropdown);
 })();
