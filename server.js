@@ -288,25 +288,29 @@ app.post("/send-email", async (req, res) => {
     let payUrl = "";
 
     if (amountCents > 0) {
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        mode: "payment",
-        line_items: [{
-          quantity: 1,
-          price_data: {
-            currency: "usd",
-            unit_amount: amountCents,
-            product_data: {
-              name: invoiceNumber ? "Invoice #" + invoiceNumber : "Invoice Payment",
-              description: customer ? "Customer: " + customer : "JobFlow Pro invoice payment"
+      try {
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ["card"],
+          mode: "payment",
+          line_items: [{
+            quantity: 1,
+            price_data: {
+              currency: "usd",
+              unit_amount: amountCents,
+              product_data: {
+                name: invoiceNumber ? "Invoice #" + invoiceNumber : "Invoice Payment",
+                description: customer ? "Customer: " + customer : "JobFlow Pro invoice payment"
+              }
             }
-          }
-        }],
-        metadata: { invoiceNumber, customer },
-        success_url: `${APP_BASE_URL}/paid.html?invoice=${encodeURIComponent(invoiceNumber)}`,
-        cancel_url: `${APP_BASE_URL}/payment-cancelled.html?invoice=${encodeURIComponent(invoiceNumber)}`
-      });
-      payUrl = session.url || "";
+          }],
+          metadata: { invoiceNumber, customer },
+          success_url: `${APP_BASE_URL}/paid.html?invoice=${encodeURIComponent(invoiceNumber)}`,
+          cancel_url: `${APP_BASE_URL}/payment-cancelled.html?invoice=${encodeURIComponent(invoiceNumber)}`
+        });
+        payUrl = session.url || "";
+      } catch (stripeErr) {
+        console.warn("Stripe pay link skipped:", stripeErr.message);
+      }
     }
 
     const transporter = nodemailer.createTransport({
@@ -385,7 +389,7 @@ app.post("/send-email", async (req, res) => {
     });
   } catch (error) {
     console.error("send-email error:", error.message);
-    return res.status(500).json({ sent: false, error: "Email send failed." });
+    return res.status(500).json({ sent: false, error: error.message || "Email send failed." });
   }
 });
 
@@ -674,7 +678,7 @@ app.post("/send-quote-email", async (req, res) => {
     return res.json({ sent: true });
   } catch (e) {
     console.error("send-quote-email error:", e.message);
-    return res.status(500).json({ sent: false, error: "Quote email failed." });
+    return res.status(500).json({ sent: false, error: e.message || "Quote email failed." });
   }
 });
 
