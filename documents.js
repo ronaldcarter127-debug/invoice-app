@@ -105,9 +105,9 @@ function createQuote() {
   const data = getDocumentData();
   if (data.total <= 0) { alert("Add at least one item before creating quote"); return; }
 
-  // Quotes should not carry prior invoice payments
-  data.amountPaid = 0;
-  data.balanceDue = data.finalTotal;
+  // Keep any payments received entered on the form
+  data.amountPaid = Number(data.amountPaid) || 0;
+  data.balanceDue = Math.max(0, data.finalTotal - data.amountPaid);
 
   data.quoteNumber = getNextQuoteNumber();
   data.date = new Date().toLocaleString();
