@@ -349,32 +349,27 @@ function getActiveDocKind() {
 }
 
 function buildEmailPayload(source, kind, to) {
-  const items = Array.isArray(source && source.items) ? source.items : [];
-  const itemTotal = calcItemsTotal(items);
-  const total = Number(source && source.total || 0) || itemTotal;
-  const taxAmount = Number(source && source.taxAmount || 0) || 0;
-  const finalTotal = Number(source && source.finalTotal || 0) || (total + taxAmount);
-  const amountPaid = Number(source && source.amountPaid || 0);
-  const balanceDue = Number(source && source.balanceDue || 0) || Math.max(0, finalTotal - amountPaid);
   return {
-    to: String(to || "").trim(),
+    to: to,
+    invoiceNumber: String(source && source.invoiceNumber || "").trim(),
+    quoteNumber: String(source && source.quoteNumber || "").trim(),
     customer: String(source && source.customer || "").trim(),
+    contact: String(source && source.contact || "").trim(),
+    email: String(source && source.email || "").trim(),
+    address: String(source && source.address || "").trim(),
+    businessName: String(source && source.businessName || "").trim(),
+    businessPhone: String(source && source.businessPhone || "").trim(),
+    businessEmail: String(source && source.businessEmail || "").trim(),
+    businessAddress: String(source && source.businessAddress || "").trim(),
     date: String(source && source.date || "").trim(),
     dueDate: String(source && source.dueDate || "").trim(),
-    items,
-    total,
-    taxAmount,
-    finalTotal,
-    amountPaid,
-    balanceDue,
     notes: String(source && source.notes || "").trim(),
-    businessName: String(
-      (source && (source.businessName || source.companyName)) ||
-      (typeof getBusinessInfo === "function" && (getBusinessInfo().businessName || getBusinessInfo().companyName)) ||
-      "JobFlow Pro"
-    ).trim(),
-    invoiceNumber: kind === "invoice" ? normalizeDocNumber(source && source.invoiceNumber) : "",
-    quoteNumber: kind === "quote" ? normalizeDocNumber(source && source.quoteNumber) : ""
+    items: Array.isArray(source && source.items) ? source.items : [],
+    total: Number(source && source.total) || 0,
+    taxAmount: Number(source && source.taxAmount) || 0,
+    finalTotal: Number(source && source.finalTotal) || 0,
+    amountPaid: Number(source && source.amountPaid) || 0,
+    balanceDue: Number(source && source.balanceDue) || 0
   };
 }
 
@@ -491,7 +486,7 @@ async function sendEmail(toOverride) {
     rememberCustomerEmail(payload.customer, to);
     return true;
   } catch (err) {
-    alert(String(err && err.message || "Email send failed."));
+    alert("API request failed: " + endpoint + "\n" + String(err && err.message || "Email send failed."));
     return false;
   }
 }
