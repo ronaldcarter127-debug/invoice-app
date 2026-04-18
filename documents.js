@@ -10,6 +10,7 @@ function normalizeDocNumber(value) {
   return String(value == null ? "" : value).trim();
 }
 
+
 function getStoredQuotes() {
   return JSON.parse(localStorage.getItem("quoteHistory") || "[]");
 }
