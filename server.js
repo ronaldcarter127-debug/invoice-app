@@ -79,6 +79,7 @@ function requireMongoReady() {
 }
 
 const transientQuoteStatus = new Map();
+let mongoConnectInFlight = false;
 
 function setTransientQuoteStatus(quoteNumber, status, acceptedAt) {
   const key = cleanText(quoteNumber, 80);
@@ -211,14 +212,29 @@ app.get("/health", function (_req, res) {
     status[k] = process.env[k] ? "✅ set" : "❌ missing";
   });
   status.EMAIL_AUTH = getEmailPassword() ? "✅ set" : "❌ missing (set EMAIL_PASS or EMAIL_PASSWORD)";
+  status.MONGO_STATUS = isMongoReady() ? "✅ connected" : "❌ disconnected";
   res.status(200).json({ ok: true, env: status });
 });
 
 // 🔥 CONNECT DATABASE
+async function ensureMongoConnection() {
+  if (!process.env.MONGO_URI || mongoConnectInFlight || isMongoReady()) return;
+  mongoConnectInFlight = true;
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("MongoDB Connected");
+  } catch (err) {
+    console.log("MongoDB error:", err.message);
+  } finally {
+    mongoConnectInFlight = false;
+  }
+}
+
 if (process.env.MONGO_URI) {
-  mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("MongoDB Connected"))
-    .catch(err => console.log("MongoDB error:", err.message));
+  ensureMongoConnection();
+  setInterval(function () {
+    ensureMongoConnection();
+  }, 15000);
 }
 
 // 📦 SCHEMA
