@@ -329,9 +329,22 @@ window.openForm = openForm;
 window.openInvoiceHistory = openInvoiceHistory;
 window.openQuoteHistoryDash = openQuoteHistoryDash;
 
+function bindPrimaryActionButtons() {
+  const createInvoiceBtn = $id("createInvoiceBtn");
+  const createQuoteBtn = $id("createQuoteBtn");
+  const previewInvoiceBtn = $id("previewInvoiceBtn");
+  const addItemBtn = $id("addItemBtn");
+
+  if (createInvoiceBtn) createInvoiceBtn.onclick = function () { createDoc(); };
+  if (createQuoteBtn) createQuoteBtn.onclick = function () { createQuote(); };
+  if (previewInvoiceBtn) previewInvoiceBtn.onclick = function () { previewInvoice(); };
+  if (addItemBtn) addItemBtn.onclick = function () { addItem(); };
+}
+
 window.onload = function() {
   App.premium = localStorage.getItem("isPremium") === "true" || localStorage.getItem("premium") === "true";
   checkPaymentReturn();
+  bindPrimaryActionButtons();
   addItem();
   setInvoiceEditingLocked(false, "");
   updateLiveTotals();
