@@ -30,9 +30,9 @@ async function upgrade() {
 
 function checkPremium() {
   App.premium = localStorage.getItem("premium") === "true" || localStorage.getItem("isPremium") === "true";
-  const FREE_INVOICE_HISTORY_LIMIT = 3;
-  const usedInvoices = typeof getSavedInvoices === "function" ? getSavedInvoices().length : 0;
-  const usedLabel = Math.min(FREE_INVOICE_HISTORY_LIMIT, Math.max(0, usedInvoices)) + "/" + FREE_INVOICE_HISTORY_LIMIT;
+  const FREE_INVOICE_HISTORY_LIMIT = typeof getFreeInvoiceMonthlyLimit === "function" ? getFreeInvoiceMonthlyLimit() : 5;
+  const usedInvoices = typeof getFreeInvoiceMonthlyUsage === "function" ? getFreeInvoiceMonthlyUsage() : 0;
+  const usedLabel = Math.max(0, usedInvoices) + "/" + FREE_INVOICE_HISTORY_LIMIT;
 
   const quoteHistoryBtn = document.getElementById("quoteHistoryBtn");
   const invoiceHistoryBtn = document.getElementById("invoiceHistoryBtn");
@@ -49,7 +49,7 @@ function checkPremium() {
     quoteHistoryBtn.classList.toggle("locked", !App.premium);
     invoiceHistoryBtn.classList.remove("locked");
     quoteHistoryBtn.textContent = App.premium ? "Quote History" : "Quote History (Premium)";
-    invoiceHistoryBtn.textContent = App.premium ? "Invoice History" : "Invoice History (" + usedLabel + " used)";
+    invoiceHistoryBtn.textContent = App.premium ? "Invoice History" : "Invoice History (" + usedLabel + " this month)";
   }
 
   if (upgradeBtn) {
@@ -62,7 +62,7 @@ function checkPremium() {
       planMessage.textContent = "All features unlocked: full history, polished export flow, and premium experience.";
     } else {
       planBadge.textContent = "Free Plan";
-      planMessage.textContent = "Create invoices and quotes. Invoice history saves: " + usedLabel + ". Upgrade for unlimited history.";
+      planMessage.textContent = "Create invoices and quotes. Invoice history: " + usedLabel + " this month. Upgrade for unlimited history.";
     }
   }
 }

@@ -245,11 +245,18 @@ async function showInvoiceHistory() {
   let invoices = refreshAllInvoiceStatuses();
   if (!invoices.length) { displayInvoice("<div class='invoice-box'><p>No invoices found.</p></div>"); return; }
 
+  const freeMonthlyLimit = typeof getFreeInvoiceMonthlyLimit === "function" ? getFreeInvoiceMonthlyLimit() : 5;
+  const currentMonthKey = (function () {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+  })();
+  const isPremium = !!App.premium;
+
   // Sync payment status from server for each invoice
   await Promise.all(invoices.map(async function (invoice) {
     const invNum = normalizeDocNumber(invoice.invoiceNumber);
     if (!invNum) return;
-    const s = await fetchJsonWithTimeout(`${API_BASE_URL}/payment-status/${encodeURIComponent(invNum)}`, 1800);
+    const s = await fetchJsonWithTimeout(`${API_BASE_URL}/payment-status/${encodeURIComponent(invNum)}`, 6000);
     if (s && s.found && s.paid) {
       invoice.status = "Paid";
       invoice.paidAt = s.paidAt || invoice.paidAt || null;
@@ -270,13 +277,30 @@ async function showInvoiceHistory() {
   localStorage.setItem("invoiceHistory", JSON.stringify(stored));
 
   let html = "<div class='invoice-box'><h2>Invoice History</h2>";
+  if (!isPremium) {
+    const used = typeof getFreeInvoiceMonthlyUsage === "function" ? getFreeInvoiceMonthlyUsage(invoices) : 0;
+    html += "<p style='margin:0 0 12px 0;color:#6b7280;'>Free plan: " + used + "/" + freeMonthlyLimit + " invoices this month. Older entries this month are locked.</p>";
+  }
+
+  let unlockedThisMonthCount = 0;
   invoices.slice().reverse().forEach(function (invoice) {
     const status = invoice.status || getInvoiceStatus(invoice);
     const statusClass = "status-" + status.toLowerCase();
     const invKey = String(invoice.invoiceNumber || "").replace(/"/g, "&quot;");
-    html += "<div class='quote-entry'>";
-    html += "<span><strong>" + invoice.invoiceNumber + "</strong> <span class='status-badge " + statusClass + "'>" + status.toUpperCase() + "</span><br>" + (invoice.date || "No date") + "<br>" + (invoice.customer || "No customer") + "</span>";
-    html += "<span><button onclick='loadInvoice(\"" + invKey + "\")'>Open</button> <button onclick='deleteInvoice(\"" + invKey + "\")'>Delete</button></span>";
+
+    const monthKey = String(invoice.createdMonthKey || "").trim();
+    const isCurrentMonth = monthKey === currentMonthKey;
+    const shouldLock = !isPremium && isCurrentMonth && unlockedThisMonthCount >= freeMonthlyLimit;
+    if (!shouldLock && isCurrentMonth) unlockedThisMonthCount += 1;
+
+    html += "<div class='quote-entry" + (shouldLock ? " invoice-entry-locked" : "") + "'>";
+    if (shouldLock) {
+      html += "<span class='invoice-locked-content'><strong>" + invoice.invoiceNumber + "</strong> <span class='status-badge status-locked'>LOCKED</span><br>" + (invoice.date || "No date") + "<br>" + (invoice.customer || "No customer") + "</span>";
+      html += "<span><button onclick='upgrade()'>Upgrade</button></span>";
+    } else {
+      html += "<span><strong>" + invoice.invoiceNumber + "</strong> <span class='status-badge " + statusClass + "'>" + status.toUpperCase() + "</span><br>" + (invoice.date || "No date") + "<br>" + (invoice.customer || "No customer") + "</span>";
+      html += "<span><button onclick='loadInvoice(\"" + invKey + "\")'>Open</button> <button onclick='deleteInvoice(\"" + invKey + "\")'>Delete</button></span>";
+    }
     html += "</div>";
   });
   html += "</div>";

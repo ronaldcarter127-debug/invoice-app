@@ -34,24 +34,43 @@ function isPremiumUser() {
   return localStorage.getItem("premium") === "true" || localStorage.getItem("isPremium") === "true";
 }
 
+function getCurrentMonthKey() {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return d.getFullYear() + "-" + mm;
+}
+
+function getFreeInvoiceMonthlyLimit() {
+  return 5;
+}
+
+function getInvoiceMonthKey(invoice) {
+  return String(invoice && invoice.createdMonthKey || "").trim();
+}
+
+function getFreeInvoiceMonthlyUsage(invoices) {
+  const list = Array.isArray(invoices) ? invoices : getSavedInvoices();
+  const currentMonth = getCurrentMonthKey();
+  return list.filter(function (invoice) {
+    return getInvoiceMonthKey(invoice) === currentMonth;
+  }).length;
+}
+
 function saveInvoice(data) {
   const invoices = getSavedInvoices();
-  const FREE_INVOICE_HISTORY_LIMIT = 3;
 
-  if (!isPremiumUser() && invoices.length >= FREE_INVOICE_HISTORY_LIMIT) {
-    return {
-      saved: false,
-      reason: "free-limit",
-      limit: FREE_INVOICE_HISTORY_LIMIT
-    };
-  }
+  const next = Object.assign({}, data || {});
+  if (!next.createdAt) next.createdAt = new Date().toISOString();
+  if (!next.createdMonthKey) next.createdMonthKey = getCurrentMonthKey();
 
-  invoices.push(data);
+  invoices.push(next);
   writeJson("invoiceHistory", invoices);
 
   return {
     saved: true,
-    limit: FREE_INVOICE_HISTORY_LIMIT
+    limit: getFreeInvoiceMonthlyLimit(),
+    usedThisMonth: getFreeInvoiceMonthlyUsage(invoices),
+    premium: isPremiumUser()
   };
 }
 
