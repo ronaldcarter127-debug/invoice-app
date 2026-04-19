@@ -88,6 +88,16 @@ function withTimeout(promise, timeoutMs, message) {
   ]);
 }
 
+function isMongoReady() {
+  return mongoose && mongoose.connection && mongoose.connection.readyState === 1;
+}
+
+function requireMongoReady() {
+  if (!isMongoReady()) {
+    throw new Error("Database is not connected. Please try again in a moment.");
+  }
+}
+
 const transientQuoteStatus = new Map();
 const phoneVerifiedTickets = new Map();
 
@@ -167,10 +177,18 @@ async function getSessionUser(req) {
   if (!rawToken) return null;
 
   const tokenHash = hashToken(rawToken);
-  const session = await Session.findOne({ tokenHash, expiresAt: { $gt: new Date() } }).lean();
+  const session = await withTimeout(
+    Session.findOne({ tokenHash, expiresAt: { $gt: new Date() } }).lean(),
+    1500,
+    "Session lookup timed out."
+  );
   if (!session) return null;
 
-  const user = await User.findById(session.userId).lean();
+  const user = await withTimeout(
+    User.findById(session.userId).lean(),
+    1500,
+    "User lookup timed out."
+  );
   if (!user) return null;
 
   return { user, session, rawToken };
@@ -297,12 +315,18 @@ app.post("/auth/send-phone-code", async (req, res) => {
     const phone = normalizePhone((req.body || {}).phone);
     if (!phone) return res.status(400).json({ ok: false, error: "Valid phone number is required." });
 
-    const existing = await User.findOne({ phone }).lean();
-    if (existing) return res.status(409).json({ ok: false, error: "This phone number is already linked to an account." });
-
     if (!twilioClient || !TWILIO_VERIFY_SERVICE_SID) {
       return res.status(500).json({ ok: false, error: "Phone verification is not configured yet." });
     }
+
+    requireMongoReady();
+
+    const existing = await withTimeout(
+      User.findOne({ phone }).lean(),
+      1500,
+      "Database lookup timed out. Please try again."
+    );
+    if (existing) return res.status(409).json({ ok: false, error: "This phone number is already linked to an account." });
 
     await twilioClient.verify.v2.services(TWILIO_VERIFY_SERVICE_SID)
       .verifications
@@ -353,10 +377,20 @@ app.post("/auth/signup", async (req, res) => {
       return res.status(400).json({ ok: false, error: "Phone verification required before signup." });
     }
 
-    const existing = await User.findOne({ email }).lean();
+    requireMongoReady();
+
+    const existing = await withTimeout(
+      User.findOne({ email }).lean(),
+      1500,
+      "Database lookup timed out. Please try again."
+    );
     if (existing) return res.status(409).json({ ok: false, error: "Email already registered." });
 
-    const existingPhone = await User.findOne({ phone }).lean();
+    const existingPhone = await withTimeout(
+      User.findOne({ phone }).lean(),
+      1500,
+      "Database lookup timed out. Please try again."
+    );
     if (existingPhone) return res.status(409).json({ ok: false, error: "This phone number is already linked to an account." });
 
     const salt = makeSalt();
@@ -383,7 +417,13 @@ app.post("/auth/login", async (req, res) => {
       return res.status(400).json({ ok: false, error: "Email and password are required." });
     }
 
-    const user = await User.findOne({ email }).lean();
+    requireMongoReady();
+
+    const user = await withTimeout(
+      User.findOne({ email }).lean(),
+      1500,
+      "Database lookup timed out. Please try again."
+    );
     if (!user) return res.status(401).json({ ok: false, error: "Invalid credentials." });
 
     const expectedHash = hashPassword(password, user.passwordSalt);
@@ -404,6 +444,7 @@ app.post("/auth/login", async (req, res) => {
 
 app.get("/auth/me", async (req, res) => {
   try {
+    requireMongoReady();
     const auth = await getSessionUser(req);
     if (!auth) return res.status(401).json({ ok: false, error: "Unauthorized." });
 
