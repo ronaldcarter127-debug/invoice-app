@@ -12,15 +12,15 @@ function normalizeDocNumber(value) {
 
 
 function getStoredQuotes() {
-  return JSON.parse(localStorage.getItem("quoteHistory") || "[]");
+  return readJson("quoteHistory", []);
 }
 
 function saveStoredQuotes(quotes) {
-  localStorage.setItem("quoteHistory", JSON.stringify(Array.isArray(quotes) ? quotes : []));
+  writeJson("quoteHistory", Array.isArray(quotes) ? quotes : []);
 }
 
 function getStoredInvoices() {
-  return JSON.parse(localStorage.getItem("invoiceHistory") || "[]");
+  return readJson("invoiceHistory", []);
 }
 
 function getStoredQuoteByNumber(quoteNumber) {
@@ -274,7 +274,7 @@ async function showInvoiceHistory() {
     });
     if (idx !== -1) stored[idx] = Object.assign(stored[idx], { status: inv.status, balanceDue: inv.balanceDue, paidAt: inv.paidAt });
   });
-  localStorage.setItem("invoiceHistory", JSON.stringify(stored));
+  writeJson("invoiceHistory", stored);
 
   let html = "<div class='invoice-box'><h2>Invoice History</h2>";
   if (!isPremium) {
@@ -585,7 +585,7 @@ async function sendQuoteThenConvert() {
     if (!sent) return;
 
     const qn = String(App.activeQuoteNumber || "").trim();
-    const list = JSON.parse(localStorage.getItem("quoteHistory") || "[]");
+    const list = getStoredQuotes();
     const latest = list.find(q => String(q && q.quoteNumber || "").trim() === qn) || quote;
 
     convertQuoteToInvoice(latest);

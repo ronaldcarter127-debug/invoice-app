@@ -1,5 +1,21 @@
+function getAccountStoragePrefix() {
+  try {
+    const raw = localStorage.getItem("authUser");
+    const parsed = raw ? JSON.parse(raw) : null;
+    const id = String((parsed && (parsed.id || parsed.email)) || "").trim();
+    if (!id) return "acct:guest:";
+    return "acct:" + id + ":";
+  } catch (_) {
+    return "acct:guest:";
+  }
+}
+
+function scopedStorageKey(key) {
+  return getAccountStoragePrefix() + String(key || "").trim();
+}
+
 function readJson(key, fallbackValue) {
-  const raw = localStorage.getItem(key);
+  const raw = localStorage.getItem(scopedStorageKey(key));
   if (!raw) return fallbackValue;
   try {
     return JSON.parse(raw);
@@ -9,7 +25,7 @@ function readJson(key, fallbackValue) {
 }
 
 function writeJson(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
+  localStorage.setItem(scopedStorageKey(key), JSON.stringify(value));
 }
 
 function getSavedQuotes() {
@@ -30,56 +46,10 @@ function getSavedInvoices() {
   return readJson("invoiceHistory", []);
 }
 
-function isPremiumUser() {
-  if (typeof App !== "undefined" && App && typeof App.premium === "boolean") {
-    return !!App.premium;
-  }
-  const authUser = readJson("authUser", null) || {};
-  if (typeof authUser.isPremium === "boolean") return authUser.isPremium;
-  const plan = String(authUser.plan || authUser.planName || "").toLowerCase();
-  if (plan === "premium" || plan === "pro") return true;
-  const status = String(authUser.subscriptionStatus || "").toLowerCase();
-  return status === "active" || status === "premium";
-}
-
-function getCurrentMonthKey() {
-  const d = new Date();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  return d.getFullYear() + "-" + mm;
-}
-
-function getFreeInvoiceMonthlyLimit() {
-  return 5;
-}
-
-function getInvoiceMonthKey(invoice) {
-  return String(invoice && invoice.createdMonthKey || "").trim();
-}
-
-function getFreeInvoiceMonthlyUsage(invoices) {
-  const list = Array.isArray(invoices) ? invoices : getSavedInvoices();
-  const currentMonth = getCurrentMonthKey();
-  return list.filter(function (invoice) {
-    return getInvoiceMonthKey(invoice) === currentMonth;
-  }).length;
-}
-
 function saveInvoice(data) {
   const invoices = getSavedInvoices();
-
-  const next = Object.assign({}, data || {});
-  if (!next.createdAt) next.createdAt = new Date().toISOString();
-  if (!next.createdMonthKey) next.createdMonthKey = getCurrentMonthKey();
-
-  invoices.push(next);
+  invoices.push(data);
   writeJson("invoiceHistory", invoices);
-
-  return {
-    saved: true,
-    limit: getFreeInvoiceMonthlyLimit(),
-    usedThisMonth: getFreeInvoiceMonthlyUsage(invoices),
-    premium: isPremiumUser()
-  };
 }
 
 function updateSavedInvoice(data) {
@@ -91,10 +61,11 @@ function updateSavedInvoice(data) {
 }
 
 function getNextInvoiceNumber() {
-  if (!localStorage.getItem("invoiceNum")) {
-    localStorage.setItem("invoiceNum", "1");
+  const scopedInvoiceNumKey = scopedStorageKey("invoiceNum");
+  if (!localStorage.getItem(scopedInvoiceNumKey)) {
+    localStorage.setItem(scopedInvoiceNumKey, "1");
   }
-  let invoiceNum = Number(localStorage.getItem("invoiceNum") || "1");
+  let invoiceNum = Number(localStorage.getItem(scopedInvoiceNumKey) || "1");
   const existingNumbers = new Set(getSavedInvoices().map(function(invoice) {
     return invoice.invoiceNumber;
   }));
@@ -105,7 +76,7 @@ function getNextInvoiceNumber() {
     invoiceNumber = "INV-" + invoiceNum.toString().padStart(4, "0");
   }
 
-  localStorage.setItem("invoiceNum", String(invoiceNum + 1));
+  localStorage.setItem(scopedInvoiceNumKey, String(invoiceNum + 1));
   return invoiceNumber;
 }
 
@@ -131,7 +102,7 @@ function saveAutoSavedFormData(data) {
 
 function getSavedCustomersList() {
   try {
-    const list = JSON.parse(localStorage.getItem("savedCustomers") || "[]");
+    const list = readJson("savedCustomers", []);
     return Array.isArray(list) ? list : [];
   } catch (_) {
     return [];
@@ -139,7 +110,7 @@ function getSavedCustomersList() {
 }
 
 function setSavedCustomersList(list) {
-  localStorage.setItem("savedCustomers", JSON.stringify(Array.isArray(list) ? list : []));
+  writeJson("savedCustomers", Array.isArray(list) ? list : []);
 }
 
 function refreshSavedCustomersDropdown() {
