@@ -72,13 +72,6 @@ function showAuthGate(errorMessage) {
       "<p style='margin:0 0 14px 0;color:#94a3b8;'>Create an account or log in to use the app.</p>" +
       "<div id='authError' style='display:none;background:#7f1d1d;color:#fecaca;border:1px solid #991b1b;border-radius:8px;padding:8px 10px;margin-bottom:10px;'></div>" +
       "<input id='authEmail' type='email' placeholder='Email' style='width:100%;box-sizing:border-box;margin-bottom:8px;padding:10px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f8fafc;'>" +
-      "<input id='authPhone' type='tel' placeholder='Phone number (required for signup)' style='width:100%;box-sizing:border-box;margin-bottom:8px;padding:10px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f8fafc;'>" +
-      "<div style='display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px;'>" +
-      "<input id='authPhoneCode' type='text' placeholder='SMS code' style='width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f8fafc;'>" +
-      "<button id='sendPhoneCodeBtn' type='button' style='padding:10px 12px;border:none;border-radius:8px;background:#334155;color:#e2e8f0;font-weight:700;cursor:pointer;'>Send Code</button>" +
-      "</div>" +
-      "<button id='verifyPhoneCodeBtn' type='button' style='width:100%;padding:10px;border:none;border-radius:8px;background:#0f766e;color:#ecfeff;font-weight:700;cursor:pointer;margin-bottom:8px;'>Verify Phone</button>" +
-      "<div id='authPhoneState' style='display:none;background:#052e16;color:#bbf7d0;border:1px solid #166534;border-radius:8px;padding:8px 10px;margin-bottom:8px;'></div>" +
       "<input id='authPassword' type='password' placeholder='Password (min 8 chars)' style='width:100%;box-sizing:border-box;margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f8fafc;'>" +
       "<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px;'>" +
       "<button id='signupBtn' type='button' style='padding:10px;border:none;border-radius:8px;background:#00ee58;color:#052e16;font-weight:700;cursor:pointer;'>Create Account</button>" +
@@ -111,79 +104,17 @@ function showAuthGate(errorMessage) {
 
   const signupBtn = document.getElementById("signupBtn");
   const loginBtn = document.getElementById("loginBtn");
-  const sendPhoneCodeBtn = document.getElementById("sendPhoneCodeBtn");
-  const verifyPhoneCodeBtn = document.getElementById("verifyPhoneCodeBtn");
   const emailEl = document.getElementById("authEmail");
-  const phoneEl = document.getElementById("authPhone");
-  const phoneCodeEl = document.getElementById("authPhoneCode");
-  const phoneStateEl = document.getElementById("authPhoneState");
   const passEl = document.getElementById("authPassword");
-
-  let verifiedPhone = "";
-  let verifiedPhoneToken = "";
-
-  function setPhoneState(msg, ok) {
-    if (!phoneStateEl) return;
-    if (!msg) {
-      phoneStateEl.style.display = "none";
-      phoneStateEl.textContent = "";
-      return;
-    }
-    phoneStateEl.style.display = "block";
-    phoneStateEl.style.background = ok ? "#052e16" : "#3f1d0d";
-    phoneStateEl.style.color = ok ? "#bbf7d0" : "#fed7aa";
-    phoneStateEl.style.borderColor = ok ? "#166534" : "#9a3412";
-    phoneStateEl.textContent = msg;
-  }
-
-  async function sendPhoneCode() {
-    const phone = String((phoneEl && phoneEl.value) || "").trim();
-    if (!phone) return setAuthError("Phone number is required.");
-    try {
-      await authRequest("/auth/send-phone-code", { phone });
-      verifiedPhone = "";
-      verifiedPhoneToken = "";
-      setAuthError("");
-      setPhoneState("Code sent. Check your phone.", true);
-    } catch (e) {
-      setPhoneState(e && e.message ? e.message : "Failed to send code.", false);
-    }
-  }
-
-  async function verifyPhoneCode() {
-    const phone = String((phoneEl && phoneEl.value) || "").trim();
-    const code = String((phoneCodeEl && phoneCodeEl.value) || "").trim();
-    if (!phone || !code) return setAuthError("Phone and SMS code are required.");
-    try {
-      const result = await authRequest("/auth/verify-phone-code", { phone, code });
-      verifiedPhone = String(result.phone || "").trim();
-      verifiedPhoneToken = String(result.phoneVerificationToken || "").trim();
-      setAuthError("");
-      setPhoneState("Phone verified.", true);
-    } catch (e) {
-      verifiedPhone = "";
-      verifiedPhoneToken = "";
-      setPhoneState(e && e.message ? e.message : "Verification failed.", false);
-    }
-  }
 
   async function submit(mode) {
     const email = String((emailEl && emailEl.value) || "").trim();
-    const phone = String((phoneEl && phoneEl.value) || "").trim();
     const password = String((passEl && passEl.value) || "");
     if (!email || !password) return setAuthError("Email and password are required.");
-    if (mode === "signup") {
-      if (!phone) return setAuthError("Phone number is required for signup.");
-      if (!verifiedPhoneToken || !verifiedPhone) {
-        return setAuthError("Verify your phone number before creating an account.");
-      }
-    }
 
     try {
       const endpoint = mode === "signup" ? "/auth/signup" : "/auth/login";
-      const payload = mode === "signup"
-        ? { email, password, phone, phoneVerificationToken: verifiedPhoneToken }
-        : { email, password };
+      const payload = { email, password };
       const result = await authRequest(endpoint, payload);
       setAuthError("");
       setAuthSession(result.token, result.user || { email });
@@ -196,8 +127,6 @@ function showAuthGate(errorMessage) {
 
   if (signupBtn) signupBtn.onclick = function () { submit("signup"); };
   if (loginBtn) loginBtn.onclick = function () { submit("login"); };
-  if (sendPhoneCodeBtn) sendPhoneCodeBtn.onclick = function () { sendPhoneCode(); };
-  if (verifyPhoneCodeBtn) verifyPhoneCodeBtn.onclick = function () { verifyPhoneCode(); };
 }
 
 async function ensureAuthenticated() {
