@@ -334,11 +334,23 @@ function bindPrimaryActionButtons() {
   const createQuoteBtn = $id("createQuoteBtn");
   const previewInvoiceBtn = $id("previewInvoiceBtn");
   const addItemBtn = $id("addItemBtn");
+  const dashCreateInvoiceBtn = $id("dashCreateInvoiceBtn");
+  const dashCreateQuoteBtn = $id("dashCreateQuoteBtn");
+  const dashCustomersBtn = $id("dashCustomersBtn");
+  const dashSettingsBtn = $id("dashSettingsBtn");
+  const dashInvHistoryBtn = $id("dashInvHistory");
+  const dashQuoteHistoryBtn = $id("dashQuoteHistory");
 
   if (createInvoiceBtn) createInvoiceBtn.onclick = function () { createDoc(); };
   if (createQuoteBtn) createQuoteBtn.onclick = function () { createQuote(); };
   if (previewInvoiceBtn) previewInvoiceBtn.onclick = function () { previewInvoice(); };
   if (addItemBtn) addItemBtn.onclick = function () { addItem(); };
+  if (dashCreateInvoiceBtn) dashCreateInvoiceBtn.onclick = function () { openForm("invoice"); };
+  if (dashCreateQuoteBtn) dashCreateQuoteBtn.onclick = function () { openForm("quote"); };
+  if (dashCustomersBtn) dashCustomersBtn.onclick = function () { openCustomerList(); };
+  if (dashSettingsBtn) dashSettingsBtn.onclick = function () { openSettings(); };
+  if (dashInvHistoryBtn) dashInvHistoryBtn.onclick = function () { openInvoiceHistory(); };
+  if (dashQuoteHistoryBtn) dashQuoteHistoryBtn.onclick = function () { openQuoteHistoryDash(); };
 }
 
 window.onload = function() {

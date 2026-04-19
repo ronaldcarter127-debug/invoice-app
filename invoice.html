@@ -177,38 +177,38 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
     <span id="dashPlanMsg">Upgrade to unlock history features.</span>
   </div>
   <div class="dash-grid">
-    <div class="dash-card" onclick="openForm('invoice')">
+    <button type="button" class="dash-card" id="dashCreateInvoiceBtn" onclick="openForm('invoice')">
       <div class="dash-icon">🧾</div>
       <div class="dash-label">Create Invoice</div>
       <div class="dash-sub">Bill a customer</div>
-    </div>
-    <div class="dash-card" onclick="openForm('quote')">
+    </button>
+    <button type="button" class="dash-card" id="dashCreateQuoteBtn" onclick="openForm('quote')">
       <div class="dash-icon">📋</div>
       <div class="dash-label">Create Quote</div>
       <div class="dash-sub">Send a price estimate</div>
-    </div>
-    <div class="dash-card premium-card" id="dashInvHistory" onclick="openInvoiceHistory()">
+    </button>
+    <button type="button" class="dash-card premium-card" id="dashInvHistory" onclick="openInvoiceHistory()">
       <div class="dash-icon">📂</div>
       <div class="dash-label">Invoice History</div>
       <div class="dash-sub" id="dashInvSub">Premium feature</div>
-    </div>
-    <div class="dash-card premium-card" id="dashQuoteHistory" onclick="openQuoteHistoryDash()">
+    </button>
+    <button type="button" class="dash-card premium-card" id="dashQuoteHistory" onclick="openQuoteHistoryDash()">
       <div class="dash-icon">📜</div>
       <div class="dash-label">Quote History</div>
       <div class="dash-sub">View past quotes</div>
-    </div>
+    </button>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
-    <div class="dash-card" onclick="openCustomerList()">
+    <button type="button" class="dash-card" id="dashCustomersBtn" onclick="openCustomerList()">
       <div class="dash-icon">👥</div>
       <div class="dash-label">Customers</div>
       <div class="dash-sub">View &amp; manage</div>
-    </div>
-    <div class="dash-card" onclick="openSettings()">
+    </button>
+    <button type="button" class="dash-card" id="dashSettingsBtn" onclick="openSettings()">
       <div class="dash-icon">⚙️</div>
       <div class="dash-label">Business Info</div>
       <div class="dash-sub">Logo, name, contact</div>
-    </div>
+    </button>
   </div>
   <button id="upgradeBtn" class="upgrade-btn" style="width:100%;margin-top:14px;" onclick="upgrade()">Upgrade to Premium</button>
 </div>
