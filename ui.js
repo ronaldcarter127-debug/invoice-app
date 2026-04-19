@@ -16,9 +16,17 @@ window.hideSpinner = hideSpinner;
 async function upgrade() {
   try {
     const apiBase = (typeof getApiBaseUrl === "function" ? getApiBaseUrl() : "https://jobflow-api-bebm.onrender.com");
+    const token = (typeof getAuthToken === "function" ? getAuthToken() : "");
+    if (!token) {
+      alert("Please log in before upgrading.");
+      return;
+    }
     const res = await fetch(apiBase + "/create-premium-checkout", {
       method: "POST",
-      headers: { "Content-Type": "application/json" }
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      }
     });
     const data = await res.json();
     if (!res.ok || !data.url) throw new Error(data.error || "Checkout failed.");
@@ -29,7 +37,7 @@ async function upgrade() {
 }
 
 function checkPremium() {
-  App.premium = localStorage.getItem("premium") === "true" || localStorage.getItem("isPremium") === "true";
+  App.premium = !!App.premium;
   const FREE_INVOICE_HISTORY_LIMIT = typeof getFreeInvoiceMonthlyLimit === "function" ? getFreeInvoiceMonthlyLimit() : 5;
   const usedInvoices = typeof getFreeInvoiceMonthlyUsage === "function" ? getFreeInvoiceMonthlyUsage() : 0;
   const usedLabel = Math.max(0, usedInvoices) + "/" + FREE_INVOICE_HISTORY_LIMIT;

@@ -8,6 +8,15 @@ const App = {
   authReady: false
 };
 
+function resolvePremiumFromUser(user) {
+  const u = user || {};
+  if (typeof u.isPremium === "boolean") return u.isPremium;
+  const plan = String(u.plan || u.planName || "").toLowerCase();
+  if (plan === "premium" || plan === "pro") return true;
+  const status = String(u.subscriptionStatus || "").toLowerCase();
+  return status === "active" || status === "premium";
+}
+
 function getApiBaseForAuth() {
   if (typeof getApiBaseUrl === "function") return getApiBaseUrl();
   return "https://jobflow-api-bebm.onrender.com";
@@ -44,14 +53,38 @@ function setAuthSession(token, user) {
   localStorage.setItem("authToken", String(token || ""));
   localStorage.setItem("authUser", JSON.stringify(user || null));
   App.user = user || null;
+  App.premium = resolvePremiumFromUser(user);
   App.authReady = true;
 }
 
 function clearAuthSession() {
   localStorage.removeItem("authToken");
   localStorage.removeItem("authUser");
+  localStorage.removeItem("accountLastSyncedAt");
+  localStorage.removeItem("premium");
+  localStorage.removeItem("isPremium");
   App.user = null;
+  App.premium = false;
   App.authReady = false;
+}
+
+function formatSyncTime(ts) {
+  if (!ts) return "never";
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return "unknown";
+  return d.toLocaleString();
+}
+
+function markAccountSynced(ts) {
+  const value = ts || new Date().toISOString();
+  localStorage.setItem("accountLastSyncedAt", value);
+}
+
+function updateDashboardAccountSync() {
+  const el = document.getElementById("dashAccountSync");
+  if (!el) return;
+  const lastSyncedAt = localStorage.getItem("accountLastSyncedAt");
+  el.textContent = "Last synced: " + formatSyncTime(lastSyncedAt);
 }
 
 function showAuthGate(errorMessage) {
@@ -60,6 +93,8 @@ function showAuthGate(errorMessage) {
   document.getElementById("historyView").style.display = "none";
   document.getElementById("settingsView").style.display = "none";
   document.getElementById("customerListView").style.display = "none";
+  const accountView = document.getElementById("accountView");
+  if (accountView) accountView.style.display = "none";
 
   let gate = document.getElementById("authGate");
   if (!gate) {
@@ -139,6 +174,7 @@ async function ensureAuthenticated() {
   try {
     const result = await authRequest("/auth/me", null, token);
     setAuthSession(token, result.user || null);
+    markAccountSynced();
     const gate = document.getElementById("authGate");
     if (gate) gate.style.display = "none";
     return true;
@@ -155,7 +191,8 @@ function runAppInitOnce() {
   if (appInitialized) return;
   appInitialized = true;
 
-  App.premium = localStorage.getItem("isPremium") === "true" || localStorage.getItem("premium") === "true";
+  // Premium now comes from authenticated account state (/auth/me), not per-device localStorage.
+  App.premium = resolvePremiumFromUser(App.user);
   checkPaymentReturn();
   bindPrimaryActionButtons();
   addItem();
@@ -375,6 +412,25 @@ function checkPaymentReturn() {
     alert("Payment cancelled. Invoice was not charged.");
     window.history.replaceState({}, document.title, "/invoice.html");
   }
+
+  if (params.get("upgrade") === "success") {
+    const token = getAuthToken();
+    if (token) {
+      authRequest("/auth/me", null, token)
+        .then(function (result) {
+          setAuthSession(token, result.user || null);
+          markAccountSynced();
+          checkPremium();
+          updateDashboard();
+          updateDashboardAccountSync();
+          alert(App.premium ? "✅ Premium is now active on your account." : "Payment received. Premium activation is still syncing.");
+        })
+        .catch(function () {
+          alert("Payment received. We are syncing your premium status now.");
+        });
+    }
+    window.history.replaceState({}, document.title, "/invoice.html");
+  }
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
@@ -385,6 +441,8 @@ function showOutputView() {
   document.getElementById("historyView").style.display = "block";
   document.getElementById("settingsView").style.display = "none";
   document.getElementById("customerListView").style.display = "none";
+  const accountView = document.getElementById("accountView");
+  if (accountView) accountView.style.display = "none";
   window.scrollTo(0, 0);
 }
 
@@ -396,10 +454,13 @@ function showDashboard() {
   document.getElementById("historyView").style.display = "none";
   document.getElementById("settingsView").style.display = "none";
   document.getElementById("customerListView").style.display = "none";
+  const accountView = document.getElementById("accountView");
+  if (accountView) accountView.style.display = "none";
   document.getElementById("output").innerHTML = "";
   const previewArea = document.getElementById("previewArea");
   if (previewArea) previewArea.classList.remove("show");
   updateDashboard();
+  updateDashboardAccountSync();
 }
 
 function updateDashboard() {
@@ -425,6 +486,10 @@ function openForm(mode) {
   document.getElementById("dashboard").style.display = "none";
   document.getElementById("historyView").style.display = "none";
   document.getElementById("appContainer").style.display = "block";
+  document.getElementById("settingsView").style.display = "none";
+  document.getElementById("customerListView").style.display = "none";
+  const accountView = document.getElementById("accountView");
+  if (accountView) accountView.style.display = "none";
   App._dashMode = mode;
 
   const createInvoiceBtn = document.getElementById("createInvoiceBtn");
@@ -448,6 +513,8 @@ function openInvoiceHistory() {
   document.getElementById("historyView").style.display = "block";
   document.getElementById("settingsView").style.display = "none";
   document.getElementById("customerListView").style.display = "none";
+  const accountView = document.getElementById("accountView");
+  if (accountView) accountView.style.display = "none";
   showInvoiceHistory();
 }
 
@@ -457,6 +524,8 @@ function openQuoteHistoryDash() {
   document.getElementById("historyView").style.display = "block";
   document.getElementById("settingsView").style.display = "none";
   document.getElementById("customerListView").style.display = "none";
+  const accountView = document.getElementById("accountView");
+  if (accountView) accountView.style.display = "none";
   showQuoteHistory("all");
 }
 
@@ -466,6 +535,8 @@ function openSettings() {
   document.getElementById("historyView").style.display = "none";
   document.getElementById("settingsView").style.display = "block";
   document.getElementById("customerListView").style.display = "none";
+  const accountView = document.getElementById("accountView");
+  if (accountView) accountView.style.display = "none";
   loadBusinessInfo();
   updateLogoPreview(localStorage.getItem("businessLogo"));
 }
@@ -476,7 +547,141 @@ function openCustomerList() {
   document.getElementById("historyView").style.display = "none";
   document.getElementById("settingsView").style.display = "none";
   document.getElementById("customerListView").style.display = "block";
+  const accountView = document.getElementById("accountView");
+  if (accountView) accountView.style.display = "none";
   renderCustomerList();
+}
+
+function formatAccountValue(value) {
+  if (value === null || value === undefined || value === "") return "Not available";
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "number") return String(value);
+  if (Array.isArray(value)) {
+    if (!value.length) return "None";
+    return value.map(function (entry) {
+      return typeof entry === "object" ? JSON.stringify(entry) : String(entry);
+    }).join(", ");
+  }
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function formatAccountDate(value) {
+  if (!value) return "Unknown";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return String(value);
+  return d.toLocaleString();
+}
+
+function renderAccountDetails() {
+  const out = document.getElementById("accountDetailsOutput");
+  if (!out) return;
+
+  const user = App.user || {};
+  const email = String(user.email || "Not available");
+  const premium = App.premium;
+  const token = getAuthToken();
+  const tokenStatus = token ? "Active" : "Missing";
+  const tokenPreview = token ? (token.slice(0, 8) + "..." + token.slice(-4)) : "N/A";
+  const lastSynced = formatSyncTime(localStorage.getItem("accountLastSyncedAt"));
+
+  const memberSince = formatAccountDate(user.createdAt);
+  const lastUpdated = formatAccountDate(user.updatedAt);
+  const renewalDate = formatAccountDate(user.renewalDate || user.currentPeriodEnd || user.subscriptionEndsAt);
+
+  const knownKeys = {
+    email: true,
+    createdAt: true,
+    updatedAt: true,
+    role: true,
+    id: true,
+    userId: true,
+    plan: true,
+    planName: true,
+    subscriptionStatus: true,
+    stripeCustomerId: true,
+    trialEndsAt: true,
+    renewalDate: true,
+    currentPeriodEnd: true,
+    subscriptionEndsAt: true
+  };
+
+  let extraHtml = "";
+  Object.keys(user).forEach(function (key) {
+    if (knownKeys[key]) return;
+    if (/password|token|secret|hash/i.test(key)) return;
+    extraHtml += "<p><strong>" + escapeHtml(key) + ":</strong> " + escapeHtml(formatAccountValue(user[key])) + "</p>";
+  });
+
+  const planLabel = formatAccountValue(user.plan || user.planName || (premium ? "Premium" : "Free"));
+  const subscriptionStatus = formatAccountValue(user.subscriptionStatus || (premium ? "Active" : "Free Tier"));
+
+  out.innerHTML = "" +
+    "<div class='section'>" +
+    "<h3>Profile</h3>" +
+    "<p><strong>Email:</strong> " + escapeHtml(email) + "</p>" +
+    "<p><strong>User ID:</strong> " + escapeHtml(formatAccountValue(user.id || user.userId)) + "</p>" +
+    "<p><strong>Role:</strong> " + escapeHtml(formatAccountValue(user.role)) + "</p>" +
+    "<p><strong>Member Since:</strong> " + escapeHtml(memberSince) + "</p>" +
+    "<p><strong>Last Updated:</strong> " + escapeHtml(lastUpdated) + "</p>" +
+    "</div>" +
+    "<div class='section'>" +
+    "<h3>Subscription</h3>" +
+    "<p><strong>Plan:</strong> " + escapeHtml(planLabel) + "</p>" +
+    "<p><strong>Status:</strong> " + escapeHtml(subscriptionStatus) + "</p>" +
+    "<p><strong>Renews/Ends:</strong> " + escapeHtml(renewalDate) + "</p>" +
+    "<p><strong>Stripe Customer:</strong> " + escapeHtml(formatAccountValue(user.stripeCustomerId)) + "</p>" +
+    "<p><strong>Trial Ends:</strong> " + escapeHtml(formatAccountDate(user.trialEndsAt)) + "</p>" +
+    "</div>" +
+    "<div class='section'>" +
+    "<h3>Session</h3>" +
+    "<p><strong>Auth Token:</strong> " + tokenStatus + "</p>" +
+    "<p><strong>Token Preview:</strong> " + escapeHtml(tokenPreview) + "</p>" +
+    "<p><strong>Last Synced:</strong> " + escapeHtml(lastSynced) + "</p>" +
+    "</div>" +
+    "<div class='section'>" +
+    "<h3>Backend Fields</h3>" +
+    (extraHtml || "<p style='color:#6b7280;'>No additional fields returned.</p>") +
+    "</div>" +
+    "<button type='button' class='utility' onclick='refreshAccountDetails()'>Refresh Account Data</button>" +
+    "<div id='accountRefreshMsg' style='margin-top:8px;font-size:12px;color:#94a3b8;'></div>" +
+    "</div>";
+}
+
+async function refreshAccountDetails() {
+  const msg = document.getElementById("accountRefreshMsg");
+  if (msg) msg.textContent = "Refreshing account data...";
+
+  try {
+    const token = getAuthToken();
+    if (!token) throw new Error("No auth token found.");
+    const result = await authRequest("/auth/me", null, token);
+    App.user = result.user || null;
+    markAccountSynced();
+    updateDashboardAccountSync();
+    renderAccountDetails();
+    const nextMsg = document.getElementById("accountRefreshMsg");
+    if (nextMsg) nextMsg.textContent = "Account data updated.";
+  } catch (e) {
+    const nextMsg = document.getElementById("accountRefreshMsg");
+    if (nextMsg) nextMsg.textContent = e && e.message ? e.message : "Unable to refresh account data.";
+  }
+}
+
+function openAccountDetails() {
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("appContainer").style.display = "none";
+  document.getElementById("historyView").style.display = "none";
+  document.getElementById("settingsView").style.display = "none";
+  document.getElementById("customerListView").style.display = "none";
+  const accountView = document.getElementById("accountView");
+  if (accountView) accountView.style.display = "block";
+  renderAccountDetails();
+}
+
+function logoutUser() {
+  clearAuthSession();
+  showAuthGate("You have been logged out.");
 }
 
 function renderCustomerList() {
@@ -511,6 +716,9 @@ function deleteCustomerByIndex(index) {
 
 window.openSettings = openSettings;
 window.openCustomerList = openCustomerList;
+window.openAccountDetails = openAccountDetails;
+window.refreshAccountDetails = refreshAccountDetails;
+window.logoutUser = logoutUser;
 window.renderCustomerList = renderCustomerList;
 window.deleteCustomerByIndex = deleteCustomerByIndex;
 
@@ -518,6 +726,7 @@ window.showDashboard = showDashboard;
 window.openForm = openForm;
 window.openInvoiceHistory = openInvoiceHistory;
 window.openQuoteHistoryDash = openQuoteHistoryDash;
+window.updateDashboardAccountSync = updateDashboardAccountSync;
 
 function bindPrimaryActionButtons() {
   const createInvoiceBtn = $id("createInvoiceBtn");
@@ -528,6 +737,7 @@ function bindPrimaryActionButtons() {
   const dashCreateQuoteBtn = $id("dashCreateQuoteBtn");
   const dashCustomersBtn = $id("dashCustomersBtn");
   const dashSettingsBtn = $id("dashSettingsBtn");
+  const dashAccountBtn = $id("dashAccountBtn");
   const dashInvHistoryBtn = $id("dashInvHistory");
   const dashQuoteHistoryBtn = $id("dashQuoteHistory");
 
@@ -539,6 +749,7 @@ function bindPrimaryActionButtons() {
   if (dashCreateQuoteBtn) dashCreateQuoteBtn.onclick = function () { openForm("quote"); };
   if (dashCustomersBtn) dashCustomersBtn.onclick = function () { openCustomerList(); };
   if (dashSettingsBtn) dashSettingsBtn.onclick = function () { openSettings(); };
+  if (dashAccountBtn) dashAccountBtn.onclick = function () { openAccountDetails(); };
   if (dashInvHistoryBtn) dashInvHistoryBtn.onclick = function () { openInvoiceHistory(); };
   if (dashQuoteHistoryBtn) dashQuoteHistoryBtn.onclick = function () { openQuoteHistoryDash(); };
 }

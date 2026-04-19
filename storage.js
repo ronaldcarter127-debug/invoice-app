@@ -31,7 +31,15 @@ function getSavedInvoices() {
 }
 
 function isPremiumUser() {
-  return localStorage.getItem("premium") === "true" || localStorage.getItem("isPremium") === "true";
+  if (typeof App !== "undefined" && App && typeof App.premium === "boolean") {
+    return !!App.premium;
+  }
+  const authUser = readJson("authUser", null) || {};
+  if (typeof authUser.isPremium === "boolean") return authUser.isPremium;
+  const plan = String(authUser.plan || authUser.planName || "").toLowerCase();
+  if (plan === "premium" || plan === "pro") return true;
+  const status = String(authUser.subscriptionStatus || "").toLowerCase();
+  return status === "active" || status === "premium";
 }
 
 function getCurrentMonthKey() {

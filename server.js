@@ -170,6 +170,28 @@ app.post("/webhook", express.raw({ type: "application/json" }), async (req, res)
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
+    const metadata = (session && session.metadata) || {};
+    const checkoutType = String(metadata.checkoutType || "").trim().toLowerCase();
+    const premiumUserId = String(metadata.userId || "").trim();
+
+    if (checkoutType === "premium_upgrade" && premiumUserId) {
+      await User.updateOne(
+        { _id: premiumUserId },
+        {
+          $set: {
+            isPremium: true,
+            premiumSince: new Date(),
+            premiumCheckoutSessionId: String(session.id || "")
+          }
+        }
+      ).catch(function (e) {
+        console.log("Webhook premium update failed:", e.message);
+      });
+
+      console.log("✅ Premium activated for user " + premiumUserId);
+      return res.json({ received: true });
+    }
+
     const invoiceNumber = String((session.metadata && session.metadata.invoiceNumber) || "").trim();
 
     if (invoiceNumber) {
@@ -278,6 +300,9 @@ const User = mongoose.model("User", {
   email: { type: String, unique: true, index: true },
   passwordSalt: String,
   passwordHash: String,
+  isPremium: { type: Boolean, default: false },
+  premiumSince: Date,
+  premiumCheckoutSessionId: String,
   created: { type: Date, default: Date.now }
 });
 
@@ -308,13 +333,20 @@ app.post("/auth/signup", async (req, res) => {
 
     const salt = makeSalt();
     const passwordHash = hashPassword(password, salt);
-    const user = await User.create({ email, passwordSalt: salt, passwordHash });
+    const user = await User.create({ email, passwordSalt: salt, passwordHash, isPremium: false });
     const token = await createSession(user._id);
 
     return res.json({
       ok: true,
       token,
-      user: { id: String(user._id), email: user.email }
+      user: {
+        id: String(user._id),
+        email: user.email,
+        isPremium: !!user.isPremium,
+        premiumSince: user.premiumSince || null,
+        plan: user.isPremium ? "Premium" : "Free",
+        subscriptionStatus: user.isPremium ? "active" : "free"
+      }
     });
   } catch (e) {
     return res.status(500).json({ ok: false, error: e.message || "Signup failed." });
@@ -348,7 +380,14 @@ app.post("/auth/login", async (req, res) => {
     return res.json({
       ok: true,
       token,
-      user: { id: String(user._id), email: user.email }
+      user: {
+        id: String(user._id),
+        email: user.email,
+        isPremium: !!user.isPremium,
+        premiumSince: user.premiumSince || null,
+        plan: user.isPremium ? "Premium" : "Free",
+        subscriptionStatus: user.isPremium ? "active" : "free"
+      }
     });
   } catch (e) {
     return res.status(500).json({ ok: false, error: e.message || "Login failed." });
@@ -365,7 +404,12 @@ app.get("/auth/me", async (req, res) => {
       ok: true,
       user: {
         id: String(auth.user._id),
-        email: auth.user.email
+        email: auth.user.email,
+        isPremium: !!auth.user.isPremium,
+        premiumSince: auth.user.premiumSince || null,
+        premiumCheckoutSessionId: auth.user.premiumCheckoutSessionId || null,
+        plan: auth.user.isPremium ? "Premium" : "Free",
+        subscriptionStatus: auth.user.isPremium ? "active" : "free"
       }
     });
   } catch (e) {
@@ -426,6 +470,16 @@ app.post("/create-checkout-session", async (req, res) => {
 // � PREMIUM UPGRADE CHECKOUT
 app.post("/create-premium-checkout", async (req, res) => {
   try {
+    requireMongoReady();
+    const auth = await getSessionUser(req);
+    if (!auth) return res.status(401).json({ error: "Unauthorized." });
+    if (auth.user && auth.user.isPremium) {
+      return res.status(409).json({ error: "Premium is already active on this account." });
+    }
+
+    const userId = String(auth.user._id || "").trim();
+    const userEmail = cleanText(auth.user.email, 254);
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -440,7 +494,13 @@ app.post("/create-premium-checkout", async (req, res) => {
           }
         }
       }],
-      success_url: `${APP_BASE_URL}/success.html`,
+      customer_email: userEmail,
+      metadata: {
+        checkoutType: "premium_upgrade",
+        userId: userId,
+        userEmail: userEmail
+      },
+      success_url: `${APP_BASE_URL}/success.html?upgrade=success`,
       cancel_url: `${APP_BASE_URL}/invoice.html`
     });
     return res.json({ url: session.url });

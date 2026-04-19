@@ -220,6 +220,14 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
       <div class="dash-sub">Logo, name, contact</div>
     </button>
   </div>
+  <div style="margin-top:14px;">
+    <button type="button" class="dash-card" id="dashAccountBtn" onclick="openAccountDetails()" style="width:100%;">
+      <div class="dash-icon">👤</div>
+      <div class="dash-label">Account Details</div>
+      <div class="dash-sub">Plan, login, and session info</div>
+      <div class="dash-sub" id="dashAccountSync" style="margin-top:6px;color:#94a3b8;">Last synced: never</div>
+    </button>
+  </div>
   <button id="upgradeBtn" class="upgrade-btn" style="width:100%;margin-top:14px;" onclick="upgrade()">Upgrade to Premium</button>
 </div>
 
@@ -381,6 +389,16 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
     <button class="dash-back" onclick="showDashboard()">&#8592; Dashboard</button>
     <h2 style="margin:0 0 14px;">Customers</h2>
     <div id="customerListOutput"></div>
+  </div>
+</div>
+
+<!-- ── ACCOUNT VIEW ── -->
+<div id="accountView" style="display:none;">
+  <div class="card">
+    <button class="dash-back" onclick="showDashboard()">&#8592; Dashboard</button>
+    <h2 style="margin:0 0 14px;">Account Details</h2>
+    <div id="accountDetailsOutput"></div>
+    <button type="button" class="danger" style="margin-top:12px;" onclick="logoutUser()">Log Out</button>
   </div>
 </div>
 

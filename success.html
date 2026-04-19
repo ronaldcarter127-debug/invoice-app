@@ -3,13 +3,11 @@
 <body style="font-family:Arial; text-align:center; padding:50px;">
 
 <h1>✅ Payment Successful</h1>
-<p>Unlocking premium...</p>
+<p>Finalizing your account upgrade...</p>
 
 <script>
-localStorage.setItem("premium", "true");
-
 setTimeout(()=>{
-  window.location.href = "invoice.html";
+  window.location.href = "invoice.html?upgrade=success";
 }, 2000);
 </script>
 
