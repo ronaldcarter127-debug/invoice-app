@@ -30,10 +30,29 @@ function getSavedInvoices() {
   return readJson("invoiceHistory", []);
 }
 
+function isPremiumUser() {
+  return localStorage.getItem("premium") === "true" || localStorage.getItem("isPremium") === "true";
+}
+
 function saveInvoice(data) {
   const invoices = getSavedInvoices();
+  const FREE_INVOICE_HISTORY_LIMIT = 3;
+
+  if (!isPremiumUser() && invoices.length >= FREE_INVOICE_HISTORY_LIMIT) {
+    return {
+      saved: false,
+      reason: "free-limit",
+      limit: FREE_INVOICE_HISTORY_LIMIT
+    };
+  }
+
   invoices.push(data);
   writeJson("invoiceHistory", invoices);
+
+  return {
+    saved: true,
+    limit: FREE_INVOICE_HISTORY_LIMIT
+  };
 }
 
 function updateSavedInvoice(data) {

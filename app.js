@@ -227,7 +227,7 @@ function updateDashboard() {
   if (msg) msg.textContent = premium ? "All features unlocked." : "Upgrade to unlock history features.";
   if (upgradeBtn) upgradeBtn.style.display = premium ? "none" : "block";
   if (invCard) invCard.style.opacity = premium ? "1" : "0.55";
-  if (invSub) invSub.textContent = premium ? "View & sync paid status" : "Premium feature";
+  if (invSub) invSub.textContent = premium ? "Unlimited history" : "Free: up to 3 saved";
 }
 
 function openForm(mode) {
@@ -252,7 +252,6 @@ function openForm(mode) {
 }
 
 function openInvoiceHistory() {
-  if (!App.premium) { alert("Invoice History is a premium feature. Upgrade to access it."); return; }
   document.getElementById("dashboard").style.display = "none";
   document.getElementById("appContainer").style.display = "none";
   document.getElementById("historyView").style.display = "block";

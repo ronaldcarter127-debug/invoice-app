@@ -144,10 +144,13 @@ function createDoc() {
   setQuoteReadOnly(false);
   clearAcceptedQuoteBanner();
   refreshInvoiceComputedFields(data);
-  saveInvoice(data);
+  const saveResult = saveInvoice(data) || { saved: true };
   renderDocument("Invoice", data, false);
   resetEntryFieldsAfterCreate();
   showOutputView();
+  if (!saveResult.saved && saveResult.reason === "free-limit") {
+    alert("Free plan stores up to " + saveResult.limit + " invoices in history. Upgrade to save more.");
+  }
 }
 
 function convertQuoteToInvoice(quoteData) {
@@ -160,13 +163,16 @@ function convertQuoteToInvoice(quoteData) {
     amountPaid: Number(q.amountPaid || 0)
   });
   refreshInvoiceComputedFields(invoice);
-  saveInvoice(invoice);
+  const saveResult = saveInvoice(invoice) || { saved: true };
   App.activeInvoiceNumber = String(invoice.invoiceNumber || "").trim();
   App.activeQuoteNumber = "";
   setQuoteReadOnly(false);
   clearAcceptedQuoteBanner();
   setInvoiceEditingLocked(true, invoice.invoiceNumber);
   renderDocument("Invoice", invoice, false);
+  if (!saveResult.saved && saveResult.reason === "free-limit") {
+    alert("Invoice created, but free plan history is full (" + saveResult.limit + " max). Upgrade to save more.");
+  }
 }
 
 function markInvoiceAsPaid(invoiceData) {
@@ -234,10 +240,6 @@ async function showQuoteHistory(filter) {
 function showAcceptedQuotes() { return showQuoteHistory("accepted"); }
 
 async function showInvoiceHistory() {
-  if (!App.premium) {
-    alert("Invoice History is a premium feature.");
-    return;
-  }
   if (typeof showSpinner === "function") showSpinner("Syncing invoices...");
   try {
   let invoices = refreshAllInvoiceStatuses();

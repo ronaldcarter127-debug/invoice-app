@@ -42,11 +42,11 @@ function checkPremium() {
 
   if (quoteHistoryBtn && invoiceHistoryBtn) {
     quoteHistoryBtn.disabled = !App.premium;
-    invoiceHistoryBtn.disabled = !App.premium;
+    invoiceHistoryBtn.disabled = false;
     quoteHistoryBtn.classList.toggle("locked", !App.premium);
-    invoiceHistoryBtn.classList.toggle("locked", !App.premium);
+    invoiceHistoryBtn.classList.remove("locked");
     quoteHistoryBtn.textContent = App.premium ? "Quote History" : "Quote History (Premium)";
-    invoiceHistoryBtn.textContent = App.premium ? "Invoice History" : "Invoice History (Premium)";
+    invoiceHistoryBtn.textContent = App.premium ? "Invoice History" : "Invoice History (Free: 3 saved)";
   }
 
   if (upgradeBtn) {
