@@ -380,7 +380,9 @@ const CUSTOMER_EMAIL_BOOK_KEY = "customerEmailBook";
 function getActiveDocKind() {
   if (normalizeDocNumber(App.activeInvoiceNumber)) return "invoice";
   if (normalizeDocNumber(App.activeQuoteNumber)) return "quote";
-  const titleEl = document.querySelector("#output h1, #output h2, #printArea h1, #printArea h2");
+  if (App && String(App.lastRenderedDocKind || "").toLowerCase() === "quote") return "quote";
+  if (App && String(App.lastRenderedDocKind || "").toLowerCase() === "invoice") return "invoice";
+  const titleEl = document.querySelector("#output .invoice-meta h2, #printArea .invoice-meta h2, #output h2, #printArea h2");
   const title = String((titleEl && titleEl.textContent) || "").toLowerCase();
   return title.includes("quote") ? "quote" : "invoice";
 }
@@ -469,6 +471,12 @@ async function sendEmail(toOverride) {
     source = normalizeDocNumber(App.activeInvoiceNumber)
       ? getStoredInvoiceByNumber(App.activeInvoiceNumber) : null;
   }
+  if (!source && App && App.lastRenderedDoc) {
+    const renderedKind = String(App.lastRenderedDocKind || "").toLowerCase();
+    if (!renderedKind || renderedKind === kind) {
+      source = JSON.parse(JSON.stringify(App.lastRenderedDoc));
+    }
+  }
   if (!source) source = typeof getDocumentData === "function" ? getDocumentData() : {};
 
   const emailInput = document.getElementById("customerEmail");
@@ -486,8 +494,14 @@ async function sendEmail(toOverride) {
 
   const payload = buildEmailPayload(source, kind, to);
 
-  if (kind === "quote" && !payload.quoteNumber) return false;
-  if (kind === "invoice" && !payload.invoiceNumber) return false;
+  if (kind === "quote" && !payload.quoteNumber) {
+    alert("Create or open a quote before sending email.");
+    return false;
+  }
+  if (kind === "invoice" && !payload.invoiceNumber) {
+    alert("Create or open an invoice before sending email.");
+    return false;
+  }
 
   const endpoint = kind === "quote"
     ? `${API_BASE_URL}/send-quote-email`

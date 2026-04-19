@@ -52,6 +52,7 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 .item-row input:first-child {flex:0 0 325px;}
 .item-row input[type="number"] {flex:0 0 80px;text-align:center;}
 .item-row input[type="number"]:last-child {flex:0 0 125px;}
+.invoice-table-wrap {width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .invoice-table {width:100%;border-collapse:collapse;margin:20px 0;}
 .invoice-table th, .invoice-table td {padding:10px;text-align:left;border-bottom:1px solid #e5e7eb;}
 .invoice-table th {background:#f8fafc;font-weight:bold;}
@@ -100,6 +101,7 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
   .totals .total {font-size:22px;}
 
   /* Invoice/quote preview */
+  .preview {padding:15px;margin:10px 0;max-width:none;}
   .invoice-box {padding:15px;margin:10px 0;border-radius:10px;}
   .invoice-box h2 {font-size:22px;}
   .invoice-header {flex-direction:column;text-align:center;padding-bottom:12px;}
@@ -107,10 +109,15 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
   .business-info h1 {font-size:22px;}
   .invoice-meta {text-align:center;}
   .invoice-meta h2 {font-size:18px;}
-  .invoice-table {font-size:13px;}
+  .invoice-table {font-size:13px;min-width:480px;}
   .invoice-table th, .invoice-table td {padding:6px 4px;}
   .bill-to-section h3 {font-size:16px;}
   .totals-section {text-align:left;}
+  #buttons {display:grid !important;grid-template-columns:1fr;gap:8px !important;}
+  #buttons button {width:100%;margin:0;min-height:44px;}
+  .actions {display:grid;grid-template-columns:1fr;gap:8px;}
+  .actions button, .actions select {width:100%;margin-top:0;}
+  #historyView .card, #settingsView .card, #customerListView .card {padding:10px;}
 
   /* History entries */
   .quote-entry {flex-direction:column;align-items:flex-start;gap:10px;}
@@ -149,10 +156,12 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 .dash-back {background:none;border:none;color:#6b7280;font-size:14px;padding:6px 0;margin-bottom:8px;cursor:pointer;text-align:left;width:auto;}
 .dash-back:hover {color:#00ee58;}
 @media (max-width: 480px) {
+  body {padding:8px;}
   .dash-grid {gap:10px;}
   .dash-card {padding:18px 10px;}
   .dash-card .dash-icon {font-size:32px;}
   .dash-card .dash-label {font-size:14px;}
+  .invoice-box, .preview {padding:12px;}
 }
 </style>
 

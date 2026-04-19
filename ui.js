@@ -261,7 +261,7 @@ function renderInvoiceHTML(title, data, isQuote) {
   }
 
   if (data.items.length) {
-    html += "<table class='invoice-table'><thead><tr><th>Service</th><th>Qty</th><th>Price</th><th class='total-col'>Total</th></tr></thead><tbody>";
+    html += "<div class='invoice-table-wrap'><table class='invoice-table'><thead><tr><th>Service</th><th>Qty</th><th>Price</th><th class='total-col'>Total</th></tr></thead><tbody>";
     data.items.forEach(function(item) {
       const hasPrice = item.price !== "" && item.price !== null && item.price !== undefined && !isNaN(Number(item.price));
       if (item.name && hasPrice) {
@@ -271,7 +271,7 @@ function renderInvoiceHTML(title, data, isQuote) {
         html += "<tr><td>" + escapeHtml(item.name) + "</td><td>" + qty + "</td><td>$" + price.toFixed(2) + "</td><td class='total-col'>$" + itemTotal.toFixed(2) + "</td></tr>";
       }
     });
-    html += "</tbody></table>";
+    html += "</tbody></table></div>";
   }
 
   const subtotal = Number(data.total || 0);
@@ -439,6 +439,11 @@ async function renderDocument(title, data, isQuote) {
   let useQuoteMode = !!isQuote;
   if (String(title || "").toLowerCase().includes("invoice")) useQuoteMode = false;
   if (String((data && data.invoiceNumber) || "").trim()) useQuoteMode = false;
+
+  if (typeof App === "object" && App) {
+    App.lastRenderedDoc = JSON.parse(JSON.stringify(data || {}));
+    App.lastRenderedDocKind = useQuoteMode ? "quote" : "invoice";
+  }
 
   output.innerHTML = renderInvoiceHTML(useQuoteMode ? "Quote" : "Invoice", data, useQuoteMode);
 
