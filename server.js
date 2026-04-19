@@ -80,6 +80,7 @@ function requireMongoReady() {
 
 const transientQuoteStatus = new Map();
 let mongoConnectInFlight = false;
+let lastMongoError = "";
 
 function setTransientQuoteStatus(quoteNumber, status, acceptedAt) {
   const key = cleanText(quoteNumber, 80);
@@ -213,6 +214,7 @@ app.get("/health", function (_req, res) {
   });
   status.EMAIL_AUTH = getEmailPassword() ? "✅ set" : "❌ missing (set EMAIL_PASS or EMAIL_PASSWORD)";
   status.MONGO_STATUS = isMongoReady() ? "✅ connected" : "❌ disconnected";
+  status.MONGO_LAST_ERROR = lastMongoError || "";
   res.status(200).json({ ok: true, env: status });
 });
 
@@ -222,8 +224,10 @@ async function ensureMongoConnection() {
   mongoConnectInFlight = true;
   try {
     await mongoose.connect(process.env.MONGO_URI);
+    lastMongoError = "";
     console.log("MongoDB Connected");
   } catch (err) {
+    lastMongoError = String(err && err.message || "Unknown Mongo error");
     console.log("MongoDB error:", err.message);
   } finally {
     mongoConnectInFlight = false;
