@@ -217,6 +217,10 @@ function showDashboard() {
 
 function updateDashboard() {
   const premium = App.premium;
+  const FREE_INVOICE_HISTORY_LIMIT = 3;
+  const used = typeof getSavedInvoices === "function" ? getSavedInvoices().length : 0;
+  const clampedUsed = Math.min(FREE_INVOICE_HISTORY_LIMIT, Math.max(0, used));
+  const usageText = clampedUsed + "/" + FREE_INVOICE_HISTORY_LIMIT + " used";
   const badge = document.getElementById("dashPlanBadge");
   const msg = document.getElementById("dashPlanMsg");
   const upgradeBtn = document.getElementById("upgradeBtn");
@@ -224,10 +228,10 @@ function updateDashboard() {
   const invSub = document.getElementById("dashInvSub");
 
   if (badge) badge.textContent = premium ? "Premium Plan Active" : "Free Plan";
-  if (msg) msg.textContent = premium ? "All features unlocked." : "Upgrade to unlock history features.";
+  if (msg) msg.textContent = premium ? "All features unlocked." : "Invoice history: " + usageText + ". Upgrade for unlimited saves.";
   if (upgradeBtn) upgradeBtn.style.display = premium ? "none" : "block";
   if (invCard) invCard.style.opacity = premium ? "1" : "0.55";
-  if (invSub) invSub.textContent = premium ? "Unlimited history" : "Free: up to 3 saved";
+  if (invSub) invSub.textContent = premium ? "Unlimited history" : "Free: " + usageText;
 }
 
 function openForm(mode) {
