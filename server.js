@@ -429,6 +429,50 @@ app.post("/auth/logout", async (req, res) => {
   }
 });
 
+// ✅ DIRECT PREMIUM ACTIVATION (for success page, handles webhook delays)
+app.post("/activate-premium-direct", async (req, res) => {
+  try {
+    requireMongoReady();
+    const auth = await getSessionUser(req);
+    if (!auth) return res.status(401).json({ ok: false, error: "Unauthorized." });
+
+    const userId = String(auth.user._id || "").trim();
+
+    // Mark premium active immediately (webhook will confirm later)
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          isPremium: true,
+          premiumSince: new Date()
+        }
+      },
+      { new: true }
+    ).lean();
+
+    if (!updated) {
+      return res.status(500).json({ ok: false, error: "Failed to activate premium." });
+    }
+
+    console.log("✅ Premium activated directly for user " + userId);
+
+    return res.json({
+      ok: true,
+      user: {
+        id: String(updated._id),
+        email: updated.email,
+        isPremium: !!updated.isPremium,
+        premiumSince: updated.premiumSince || null,
+        plan: updated.isPremium ? "Premium" : "Free",
+        subscriptionStatus: updated.isPremium ? "active" : "free"
+      }
+    });
+  } catch (error) {
+    console.error("activate-premium-direct error:", error.message);
+    return res.status(500).json({ ok: false, error: error.message || "Premium activation failed." });
+  }
+});
+
 // 💳 STRIPE
 app.post("/create-checkout-session", async (req, res) => {
   try {
@@ -456,7 +500,7 @@ app.post("/create-checkout-session", async (req, res) => {
         }
       }],
       metadata: { invoiceNumber, customer },
-      success_url: `${APP_BASE_URL}/paid.html?invoice=${encodeURIComponent(invoiceNumber)}`,
+      success_url: `${APP_BASE_URL}/paid.html?invoice=${encodeURIComponent(invoiceNumber)}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${APP_BASE_URL}/payment-cancelled.html?invoice=${encodeURIComponent(invoiceNumber)}`
     });
 
@@ -464,6 +508,50 @@ app.post("/create-checkout-session", async (req, res) => {
   } catch (error) {
     console.error("create-checkout-session error:", error.message);
     return res.status(500).json({ error: "Stripe checkout failed." });
+  }
+});
+
+app.post("/confirm-payment", async (req, res) => {
+  try {
+    const body = req.body || {};
+    const sessionId = cleanText(body.sessionId, 200);
+    const invoiceHint = cleanText(body.invoiceNumber, 80);
+
+    if (!sessionId) {
+      return res.status(400).json({ ok: false, error: "sessionId is required." });
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const sessionStatus = String(session && session.payment_status || "").toLowerCase();
+    const paid = sessionStatus === "paid";
+    const invoiceNumber = cleanText((session && session.metadata && session.metadata.invoiceNumber) || invoiceHint, 80);
+
+    if (!invoiceNumber) {
+      return res.status(400).json({ ok: false, error: "invoiceNumber not found in checkout session." });
+    }
+
+    if (!paid) {
+      return res.json({ ok: true, paid: false, invoiceNumber: invoiceNumber });
+    }
+
+    const paidAt = new Date();
+    await Invoice.updateOne(
+      { invoiceNumber: invoiceNumber },
+      {
+        $set: {
+          invoiceNumber: invoiceNumber,
+          status: "Paid",
+          amountPaid: Number((session.amount_total || 0) / 100),
+          balanceDue: 0,
+          paidAt: paidAt
+        }
+      },
+      { upsert: true }
+    );
+
+    return res.json({ ok: true, paid: true, invoiceNumber: invoiceNumber, paidAt: paidAt });
+  } catch (error) {
+    return res.status(500).json({ ok: false, error: error.message || "Unable to confirm payment." });
   }
 });
 
@@ -612,7 +700,7 @@ app.post("/send-email", async (req, res) => {
             }
           }],
           metadata: { invoiceNumber, customer },
-          success_url: `${APP_BASE_URL}/paid.html?invoice=${encodeURIComponent(invoiceNumber)}`,
+          success_url: `${APP_BASE_URL}/paid.html?invoice=${encodeURIComponent(invoiceNumber)}&session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${APP_BASE_URL}/payment-cancelled.html?invoice=${encodeURIComponent(invoiceNumber)}`
         });
         payUrl = session.url || "";

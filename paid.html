@@ -8,20 +8,30 @@
 (function () {
   const params = new URLSearchParams(window.location.search);
   const invoiceNumber = String(params.get("invoice") || "").trim();
-  if (!invoiceNumber) return;
+  const sessionId = String(params.get("session_id") || "").trim();
+  const apiBase = "https://jobflow-api-bebm.onrender.com";
+  const target = "invoice.html?paid=1&invoice=" + encodeURIComponent(invoiceNumber);
 
-  const invoices = JSON.parse(localStorage.getItem("invoiceHistory") || "[]");
-  const idx = invoices.findIndex(function (inv) {
-    return String(inv.invoiceNumber || "").trim() === invoiceNumber;
-  });
-
-  if (idx !== -1) {
-    invoices[idx].status = "Paid";
-    invoices[idx].amountPaid = Number(invoices[idx].finalTotal || invoices[idx].total || 0);
-    invoices[idx].balanceDue = 0;
-    invoices[idx].paidAt = new Date().toLocaleString();
-    localStorage.setItem("invoiceHistory", JSON.stringify(invoices));
+  function goBack() {
+    window.location.href = target;
   }
+
+  if (!sessionId) {
+    setTimeout(goBack, 1200);
+    return;
+  }
+
+  fetch(apiBase + "/confirm-payment", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId: sessionId, invoiceNumber: invoiceNumber })
+  })
+    .then(function () {
+      setTimeout(goBack, 900);
+    })
+    .catch(function () {
+      setTimeout(goBack, 900);
+    });
 })();
 </script>
 </body>

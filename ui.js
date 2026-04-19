@@ -171,6 +171,7 @@ async function startInvoiceCheckout(data) {
   const balance = toAmount(
     toAmount(data.balanceDue) > 0 ? data.balanceDue : (toAmount(data.finalTotal) > 0 ? data.finalTotal : data.total)
   );
+  const apiBase = (typeof getApiBaseUrl === "function" ? getApiBaseUrl() : "https://jobflow-api-bebm.onrender.com");
   const amount = Math.round(balance * 100);
 
   if (!Number.isInteger(amount) || amount <= 0) {
@@ -182,7 +183,7 @@ async function startInvoiceCheckout(data) {
   const timeout = setTimeout(function () { controller.abort(); }, 15000);
 
   try {
-    const response = await fetch("http://127.0.0.1:3000/create-checkout-session", {
+    const response = await fetch(apiBase + "/create-checkout-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       signal: controller.signal,

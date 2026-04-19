@@ -416,17 +416,41 @@ function checkPaymentReturn() {
   if (params.get("upgrade") === "success") {
     const token = getAuthToken();
     if (token) {
+      const applyPremiumState = function (user) {
+        setAuthSession(token, user || null);
+        markAccountSynced();
+        checkPremium();
+        updateDashboard();
+        updateDashboardAccountSync();
+      };
+
+      const tryDirectPremiumActivation = function () {
+        return authRequest("/activate-premium-direct", { forceActivate: true }, token)
+          .then(function (result) {
+            if (result && result.ok) {
+              applyPremiumState(result.user || App.user);
+              alert("✅ Premium is now active on your account.");
+            } else {
+              alert("Payment received. Premium activation is still syncing.");
+            }
+          })
+          .catch(function () {
+            alert("Payment received. Premium activation is still syncing.");
+          });
+      };
+
       authRequest("/auth/me", null, token)
         .then(function (result) {
-          setAuthSession(token, result.user || null);
-          markAccountSynced();
-          checkPremium();
-          updateDashboard();
-          updateDashboardAccountSync();
-          alert(App.premium ? "✅ Premium is now active on your account." : "Payment received. Premium activation is still syncing.");
+          applyPremiumState(result.user || null);
+          if (App.premium) {
+            alert("✅ Premium is now active on your account.");
+            return;
+          }
+          return tryDirectPremiumActivation();
         })
         .catch(function () {
-          alert("Payment received. We are syncing your premium status now.");
+          // If /auth/me fails, still try to activate premium directly.
+          tryDirectPremiumActivation();
         });
     }
     window.history.replaceState({}, document.title, "/invoice.html");
