@@ -5,12 +5,17 @@ const Stripe = require("stripe");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const nodemailer = require("nodemailer");
+const twilio = require("twilio");
 const crypto = require("crypto");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
 const app = express();
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const twilioClient = (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)
+  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+  : null;
+const TWILIO_VERIFY_SERVICE_SID = String(process.env.TWILIO_VERIFY_SERVICE_SID || "").trim();
 const APP_BASE_URL = (process.env.APP_BASE_URL || "http://127.0.0.1:5500").replace(/\/+$/, "");
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || APP_BASE_URL).replace(/\/+$/, "");
 const API_BASE_URL = (process.env.API_BASE_URL || "http://127.0.0.1:3000").replace(/\/+$/, "");
@@ -36,6 +41,21 @@ function cleanText(value, max = 500) {
 
 function isEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+}
+
+function normalizePhone(value) {
+  let s = String(value || "").trim();
+  if (!s) return "";
+  s = s.replace(/[^\d+]/g, "");
+  if (s.startsWith("+")) {
+    const digits = s.slice(1).replace(/\D/g, "");
+    if (digits.length < 10 || digits.length > 15) return "";
+    return "+" + digits;
+  }
+  const digitsOnly = s.replace(/\D/g, "");
+  if (digitsOnly.length === 10) return "+1" + digitsOnly;
+  if (digitsOnly.length === 11 && digitsOnly.startsWith("1")) return "+" + digitsOnly;
+  return "";
 }
 
 function requiredEnv(name) {
@@ -69,6 +89,7 @@ function withTimeout(promise, timeoutMs, message) {
 }
 
 const transientQuoteStatus = new Map();
+const phoneVerifiedTickets = new Map();
 
 function setTransientQuoteStatus(quoteNumber, status, acceptedAt) {
   const key = cleanText(quoteNumber, 80);
@@ -90,6 +111,25 @@ function getTransientQuoteStatus(quoteNumber) {
     return null;
   }
   return value;
+}
+
+function issuePhoneVerifiedTicket(phone) {
+  const token = makeSessionToken();
+  phoneVerifiedTickets.set(token, {
+    phone,
+    expiresAt: Date.now() + (10 * 60 * 1000)
+  });
+  return token;
+}
+
+function consumePhoneVerifiedTicket(token, phone) {
+  const key = String(token || "").trim();
+  if (!key) return false;
+  const record = phoneVerifiedTickets.get(key);
+  phoneVerifiedTickets.delete(key);
+  if (!record) return false;
+  if (Number(record.expiresAt || 0) < Date.now()) return false;
+  return String(record.phone || "") === String(phone || "");
 }
 
 function makeSalt() {
@@ -187,7 +227,7 @@ app.use(cors({
 app.use(express.json({ limit: "2mb" }));
 
 app.get("/health", function (_req, res) {
-  const vars = ["EMAIL", "EMAIL_PASS", "EMAIL_PASSWORD", "MONGO_URI", "STRIPE_SECRET_KEY", "APP_BASE_URL", "FRONTEND_URL", "CORS_ORIGIN"];
+  const vars = ["EMAIL", "EMAIL_PASS", "EMAIL_PASSWORD", "MONGO_URI", "STRIPE_SECRET_KEY", "APP_BASE_URL", "FRONTEND_URL", "CORS_ORIGIN", "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_VERIFY_SERVICE_SID"];
   const status = {};
   vars.forEach(function (k) {
     status[k] = process.env[k] ? "✅ set" : "❌ missing";
@@ -238,6 +278,7 @@ const Quote = mongoose.model("Quote", {
 
 const User = mongoose.model("User", {
   email: { type: String, unique: true, index: true },
+  phone: { type: String, unique: true, index: true, sparse: true },
   passwordSalt: String,
   passwordHash: String,
   created: { type: Date, default: Date.now }
@@ -251,26 +292,82 @@ const Session = mongoose.model("Session", {
 });
 
 // 🔐 AUTH
+app.post("/auth/send-phone-code", async (req, res) => {
+  try {
+    const phone = normalizePhone((req.body || {}).phone);
+    if (!phone) return res.status(400).json({ ok: false, error: "Valid phone number is required." });
+
+    const existing = await User.findOne({ phone }).lean();
+    if (existing) return res.status(409).json({ ok: false, error: "This phone number is already linked to an account." });
+
+    if (!twilioClient || !TWILIO_VERIFY_SERVICE_SID) {
+      return res.status(500).json({ ok: false, error: "Phone verification is not configured yet." });
+    }
+
+    await twilioClient.verify.v2.services(TWILIO_VERIFY_SERVICE_SID)
+      .verifications
+      .create({ to: phone, channel: "sms" });
+
+    return res.json({ ok: true, phone });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message || "Failed to send verification code." });
+  }
+});
+
+app.post("/auth/verify-phone-code", async (req, res) => {
+  try {
+    const phone = normalizePhone((req.body || {}).phone);
+    const code = cleanText((req.body || {}).code, 10);
+    if (!phone || !code) return res.status(400).json({ ok: false, error: "Phone and code are required." });
+
+    if (!twilioClient || !TWILIO_VERIFY_SERVICE_SID) {
+      return res.status(500).json({ ok: false, error: "Phone verification is not configured yet." });
+    }
+
+    const check = await twilioClient.verify.v2.services(TWILIO_VERIFY_SERVICE_SID)
+      .verificationChecks
+      .create({ to: phone, code });
+
+    if (!check || String(check.status || "").toLowerCase() !== "approved") {
+      return res.status(400).json({ ok: false, error: "Invalid or expired verification code." });
+    }
+
+    const phoneVerificationToken = issuePhoneVerifiedTicket(phone);
+    return res.json({ ok: true, phone, phoneVerificationToken });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message || "Phone verification failed." });
+  }
+});
+
 app.post("/auth/signup", async (req, res) => {
   try {
     const email = cleanText((req.body || {}).email, 254).toLowerCase();
     const password = String((req.body || {}).password || "");
+    const phone = normalizePhone((req.body || {}).phone);
+    const phoneVerificationToken = String((req.body || {}).phoneVerificationToken || "").trim();
 
     if (!isEmail(email)) return res.status(400).json({ ok: false, error: "Valid email is required." });
     if (password.length < 8) return res.status(400).json({ ok: false, error: "Password must be at least 8 characters." });
+    if (!phone) return res.status(400).json({ ok: false, error: "Verified phone number is required." });
+    if (!consumePhoneVerifiedTicket(phoneVerificationToken, phone)) {
+      return res.status(400).json({ ok: false, error: "Phone verification required before signup." });
+    }
 
     const existing = await User.findOne({ email }).lean();
     if (existing) return res.status(409).json({ ok: false, error: "Email already registered." });
 
+    const existingPhone = await User.findOne({ phone }).lean();
+    if (existingPhone) return res.status(409).json({ ok: false, error: "This phone number is already linked to an account." });
+
     const salt = makeSalt();
     const passwordHash = hashPassword(password, salt);
-    const user = await User.create({ email, passwordSalt: salt, passwordHash });
+    const user = await User.create({ email, phone, passwordSalt: salt, passwordHash });
     const token = await createSession(user._id);
 
     return res.json({
       ok: true,
       token,
-      user: { id: String(user._id), email: user.email }
+      user: { id: String(user._id), email: user.email, phone: user.phone }
     });
   } catch (e) {
     return res.status(500).json({ ok: false, error: e.message || "Signup failed." });
@@ -298,7 +395,7 @@ app.post("/auth/login", async (req, res) => {
     return res.json({
       ok: true,
       token,
-      user: { id: String(user._id), email: user.email }
+      user: { id: String(user._id), email: user.email, phone: user.phone || "" }
     });
   } catch (e) {
     return res.status(500).json({ ok: false, error: e.message || "Login failed." });
@@ -314,7 +411,8 @@ app.get("/auth/me", async (req, res) => {
       ok: true,
       user: {
         id: String(auth.user._id),
-        email: auth.user.email
+        email: auth.user.email,
+        phone: auth.user.phone || ""
       }
     });
   } catch (e) {
