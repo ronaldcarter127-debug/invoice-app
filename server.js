@@ -5,6 +5,7 @@ const Stripe = require("stripe");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
@@ -89,6 +90,50 @@ function getTransientQuoteStatus(quoteNumber) {
     return null;
   }
   return value;
+}
+
+function makeSalt() {
+  return crypto.randomBytes(16).toString("hex");
+}
+
+function hashPassword(password, salt) {
+  return crypto.pbkdf2Sync(String(password || ""), String(salt || ""), 120000, 64, "sha512").toString("hex");
+}
+
+function makeSessionToken() {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+function hashToken(token) {
+  return crypto.createHash("sha256").update(String(token || "")).digest("hex");
+}
+
+function getBearerToken(req) {
+  const auth = String((req.headers && req.headers.authorization) || "").trim();
+  const m = auth.match(/^Bearer\s+(.+)$/i);
+  return m ? String(m[1] || "").trim() : "";
+}
+
+async function createSession(userId) {
+  const raw = makeSessionToken();
+  const tokenHash = hashToken(raw);
+  const expiresAt = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
+  await Session.create({ userId, tokenHash, expiresAt });
+  return raw;
+}
+
+async function getSessionUser(req) {
+  const rawToken = getBearerToken(req);
+  if (!rawToken) return null;
+
+  const tokenHash = hashToken(rawToken);
+  const session = await Session.findOne({ tokenHash, expiresAt: { $gt: new Date() } }).lean();
+  if (!session) return null;
+
+  const user = await User.findById(session.userId).lean();
+  if (!user) return null;
+
+  return { user, session, rawToken };
 }
 
 // ⚠️ Webhook must use raw body — before express.json()
@@ -189,6 +234,104 @@ const Quote = mongoose.model("Quote", {
   status: { type: String, default: "Pending" },
   acceptedAt: Date,
   created: { type: Date, default: Date.now }
+});
+
+const User = mongoose.model("User", {
+  email: { type: String, unique: true, index: true },
+  passwordSalt: String,
+  passwordHash: String,
+  created: { type: Date, default: Date.now }
+});
+
+const Session = mongoose.model("Session", {
+  userId: { type: mongoose.Schema.Types.ObjectId, index: true },
+  tokenHash: { type: String, unique: true, index: true },
+  expiresAt: { type: Date, index: true },
+  created: { type: Date, default: Date.now }
+});
+
+// 🔐 AUTH
+app.post("/auth/signup", async (req, res) => {
+  try {
+    const email = cleanText((req.body || {}).email, 254).toLowerCase();
+    const password = String((req.body || {}).password || "");
+
+    if (!isEmail(email)) return res.status(400).json({ ok: false, error: "Valid email is required." });
+    if (password.length < 8) return res.status(400).json({ ok: false, error: "Password must be at least 8 characters." });
+
+    const existing = await User.findOne({ email }).lean();
+    if (existing) return res.status(409).json({ ok: false, error: "Email already registered." });
+
+    const salt = makeSalt();
+    const passwordHash = hashPassword(password, salt);
+    const user = await User.create({ email, passwordSalt: salt, passwordHash });
+    const token = await createSession(user._id);
+
+    return res.json({
+      ok: true,
+      token,
+      user: { id: String(user._id), email: user.email }
+    });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message || "Signup failed." });
+  }
+});
+
+app.post("/auth/login", async (req, res) => {
+  try {
+    const email = cleanText((req.body || {}).email, 254).toLowerCase();
+    const password = String((req.body || {}).password || "");
+
+    if (!isEmail(email) || !password) {
+      return res.status(400).json({ ok: false, error: "Email and password are required." });
+    }
+
+    const user = await User.findOne({ email }).lean();
+    if (!user) return res.status(401).json({ ok: false, error: "Invalid credentials." });
+
+    const expectedHash = hashPassword(password, user.passwordSalt);
+    if (expectedHash !== user.passwordHash) {
+      return res.status(401).json({ ok: false, error: "Invalid credentials." });
+    }
+
+    const token = await createSession(user._id);
+    return res.json({
+      ok: true,
+      token,
+      user: { id: String(user._id), email: user.email }
+    });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message || "Login failed." });
+  }
+});
+
+app.get("/auth/me", async (req, res) => {
+  try {
+    const auth = await getSessionUser(req);
+    if (!auth) return res.status(401).json({ ok: false, error: "Unauthorized." });
+
+    return res.json({
+      ok: true,
+      user: {
+        id: String(auth.user._id),
+        email: auth.user.email
+      }
+    });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message || "Auth check failed." });
+  }
+});
+
+app.post("/auth/logout", async (req, res) => {
+  try {
+    const rawToken = getBearerToken(req);
+    if (!rawToken) return res.json({ ok: true });
+
+    await Session.deleteOne({ tokenHash: hashToken(rawToken) });
+    return res.json({ ok: true });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e.message || "Logout failed." });
+  }
 });
 
 // 💳 STRIPE

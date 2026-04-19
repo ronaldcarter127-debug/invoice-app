@@ -3,8 +3,185 @@ const App = {
   premium: false,
   invoiceLocked: false,
   activeInvoiceNumber: "",
-  activeQuoteNumber: "" // ✅ track current quote
+  activeQuoteNumber: "", // ✅ track current quote
+  user: null,
+  authReady: false
 };
+
+function getApiBaseForAuth() {
+  if (typeof getApiBaseUrl === "function") return getApiBaseUrl();
+  return "https://jobflow-api-bebm.onrender.com";
+}
+
+async function authRequest(path, payload, token) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = "Bearer " + token;
+
+  const response = await fetch(getApiBaseForAuth() + path, {
+    method: payload ? "POST" : "GET",
+    headers,
+    body: payload ? JSON.stringify(payload) : undefined
+  });
+
+  let data = {};
+  try {
+    data = await response.json();
+  } catch (_) {
+    data = {};
+  }
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || "Authentication failed.");
+  }
+  return data;
+}
+
+function getAuthToken() {
+  return String(localStorage.getItem("authToken") || "").trim();
+}
+
+function setAuthSession(token, user) {
+  localStorage.setItem("authToken", String(token || ""));
+  localStorage.setItem("authUser", JSON.stringify(user || null));
+  App.user = user || null;
+  App.authReady = true;
+}
+
+function clearAuthSession() {
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("authUser");
+  App.user = null;
+  App.authReady = false;
+}
+
+function showAuthGate(errorMessage) {
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("appContainer").style.display = "none";
+  document.getElementById("historyView").style.display = "none";
+  document.getElementById("settingsView").style.display = "none";
+  document.getElementById("customerListView").style.display = "none";
+
+  let gate = document.getElementById("authGate");
+  if (!gate) {
+    gate = document.createElement("div");
+    gate.id = "authGate";
+    gate.style.cssText = "position:fixed;inset:0;z-index:10000;background:#0b1220;display:flex;align-items:center;justify-content:center;padding:16px;";
+    gate.innerHTML = "" +
+      "<div style='width:100%;max-width:420px;background:#111827;border:1px solid #334155;border-radius:14px;padding:20px;color:#f8fafc;'>" +
+      "<h2 style='margin:0 0 6px 0;'>JobFlow Pro</h2>" +
+      "<p style='margin:0 0 14px 0;color:#94a3b8;'>Create an account or log in to use the app.</p>" +
+      "<div id='authError' style='display:none;background:#7f1d1d;color:#fecaca;border:1px solid #991b1b;border-radius:8px;padding:8px 10px;margin-bottom:10px;'></div>" +
+      "<input id='authEmail' type='email' placeholder='Email' style='width:100%;box-sizing:border-box;margin-bottom:8px;padding:10px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f8fafc;'>" +
+      "<input id='authPassword' type='password' placeholder='Password (min 8 chars)' style='width:100%;box-sizing:border-box;margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#f8fafc;'>" +
+      "<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px;'>" +
+      "<button id='signupBtn' type='button' style='padding:10px;border:none;border-radius:8px;background:#00ee58;color:#052e16;font-weight:700;cursor:pointer;'>Create Account</button>" +
+      "<button id='loginBtn' type='button' style='padding:10px;border:none;border-radius:8px;background:#1d4ed8;color:#eff6ff;font-weight:700;cursor:pointer;'>Log In</button>" +
+      "</div>" +
+      "</div>";
+    document.body.appendChild(gate);
+  } else {
+    gate.style.display = "flex";
+  }
+
+  const err = document.getElementById("authError");
+  if (err) {
+    if (errorMessage) {
+      err.style.display = "block";
+      err.textContent = errorMessage;
+    } else {
+      err.style.display = "none";
+      err.textContent = "";
+    }
+  }
+
+  const signupBtn = document.getElementById("signupBtn");
+  const loginBtn = document.getElementById("loginBtn");
+  const emailEl = document.getElementById("authEmail");
+  const passEl = document.getElementById("authPassword");
+
+  async function submit(mode) {
+    const email = String((emailEl && emailEl.value) || "").trim();
+    const password = String((passEl && passEl.value) || "");
+    if (!email || !password) return showAuthGate("Email and password are required.");
+
+    try {
+      const endpoint = mode === "signup" ? "/auth/signup" : "/auth/login";
+      const result = await authRequest(endpoint, { email, password });
+      setAuthSession(result.token, result.user || { email });
+      gate.style.display = "none";
+      runAppInitOnce();
+    } catch (e) {
+      showAuthGate(e && e.message ? e.message : "Authentication failed.");
+    }
+  }
+
+  if (signupBtn) signupBtn.onclick = function () { submit("signup"); };
+  if (loginBtn) loginBtn.onclick = function () { submit("login"); };
+}
+
+async function ensureAuthenticated() {
+  const token = getAuthToken();
+  if (!token) {
+    showAuthGate("");
+    return false;
+  }
+
+  try {
+    const result = await authRequest("/auth/me", null, token);
+    setAuthSession(token, result.user || null);
+    const gate = document.getElementById("authGate");
+    if (gate) gate.style.display = "none";
+    return true;
+  } catch (_) {
+    clearAuthSession();
+    showAuthGate("Session expired. Please log in again.");
+    return false;
+  }
+}
+
+let appInitialized = false;
+
+function runAppInitOnce() {
+  if (appInitialized) return;
+  appInitialized = true;
+
+  App.premium = localStorage.getItem("isPremium") === "true" || localStorage.getItem("premium") === "true";
+  checkPaymentReturn();
+  bindPrimaryActionButtons();
+  addItem();
+  setInvoiceEditingLocked(false, "");
+  updateLiveTotals();
+
+  refreshSavedCustomersDropdown();
+
+  loadAutoSavedForm();
+  loadBusinessInfo();
+  updateLogoPreview(localStorage.getItem("businessLogo"));
+  checkPremium();
+
+  const amountPaidInput = $id("amountPaid");
+  if (amountPaidInput) {
+    amountPaidInput.addEventListener("blur", function() {
+      const val = parseFloat(this.value) || 0;
+      this.value = val.toFixed(2);
+      updateLiveTotals();
+    });
+  }
+
+  const appContainer = $id("appContainer");
+  if (appContainer) {
+    let updateTimeout;
+    appContainer.addEventListener("input", function() {
+      clearTimeout(updateTimeout);
+      updateTimeout = setTimeout(function() {
+        updateLiveTotals();
+        autoSaveForm();
+      }, 300);
+    });
+  }
+
+  showDashboard();
+}
 
 function setInvoiceEditingLocked(locked, invoiceNumber) {
   App.invoiceLocked = !!locked;
@@ -356,44 +533,10 @@ function bindPrimaryActionButtons() {
   if (dashQuoteHistoryBtn) dashQuoteHistoryBtn.onclick = function () { openQuoteHistoryDash(); };
 }
 
-window.onload = function() {
-  App.premium = localStorage.getItem("isPremium") === "true" || localStorage.getItem("premium") === "true";
-  checkPaymentReturn();
-  bindPrimaryActionButtons();
-  addItem();
-  setInvoiceEditingLocked(false, "");
-  updateLiveTotals();
-
-  // loadSavedCustomers(); // ❌ remove
-  refreshSavedCustomersDropdown(); // ✅ use the function you actually expose
-
-  loadAutoSavedForm();
-  loadBusinessInfo();
-  updateLogoPreview(localStorage.getItem("businessLogo"));
-  checkPremium();
-
-  const amountPaidInput = $id("amountPaid");
-  if (amountPaidInput) {
-    amountPaidInput.addEventListener("blur", function() {
-      const val = parseFloat(this.value) || 0;
-      this.value = val.toFixed(2);
-      updateLiveTotals();
-    });
-  }
-
-  const appContainer = $id("appContainer");
-  if (appContainer) {
-    let updateTimeout;
-    appContainer.addEventListener("input", function() {
-      clearTimeout(updateTimeout);
-      updateTimeout = setTimeout(function() {
-        updateLiveTotals();
-        autoSaveForm();
-      }, 300);
-    });
-  }
-
-  showDashboard();
+window.onload = async function() {
+  const authed = await ensureAuthenticated();
+  if (!authed) return;
+  runAppInitOnce();
 };
 
 (function () {
