@@ -457,7 +457,7 @@ function unlockInvoiceEditing(invoiceNumber) {
 }
 
 function getDocumentData() {
-  const itemsData = App.items.map(function(id) {
+  let itemsData = App.items.map(function(id) {
     return {
       name: getVal("name-" + id),
       qty: Number(getVal("qty-" + id)) || 1,
@@ -466,6 +466,20 @@ function getDocumentData() {
   }).filter(function(item) {
     return item.name || item.price;
   });
+
+  // Support stepped flow where App.items may already be item objects instead of DOM row ids.
+  if (!itemsData.length) {
+    itemsData = (Array.isArray(App.items) ? App.items : []).map(function (entry) {
+      if (!entry || typeof entry !== "object") return null;
+      const name = String(entry.name || entry.description || "").trim();
+      const qty = Number(entry.qty || 1) || 1;
+      const price = Number(entry.price || 0);
+      if (!name && !price) return null;
+      return { name: name, qty: qty, price: price };
+    }).filter(function (item) {
+      return !!item;
+    });
+  }
 
   const taxPercent = Number(getVal("tax")) || 0;
   const amountPaid = Number(getVal("amountPaid")) || 0;
