@@ -161,6 +161,21 @@ function normalizeInvoiceForStorage(invoice) {
   return row;
 }
 
+function shouldBackfillInvoiceFromLocal(localInvoice, remoteInvoice) {
+  if (!localInvoice || !remoteInvoice) return false;
+  const localPaid = toAmount(localInvoice.amountPaid);
+  const remotePaid = toAmount(remoteInvoice.amountPaid);
+  const localBalance = toAmount(localInvoice.balanceDue);
+  const remoteBalance = toAmount(remoteInvoice.balanceDue);
+  const localStatus = String(localInvoice.status || "").toLowerCase();
+  const remoteStatus = String(remoteInvoice.status || "").toLowerCase();
+
+  if (localPaid > remotePaid + 0.009) return true;
+  if (localBalance + 0.009 < remoteBalance) return true;
+  if (localStatus === "paid" && remoteStatus !== "paid") return true;
+  return false;
+}
+
 async function syncAccountDocuments() {
   const token = (typeof getAuthToken === "function") ? String(getAuthToken() || "").trim() : "";
   if (!token) return;
@@ -177,6 +192,25 @@ async function syncAccountDocuments() {
   const localQuotes = getStoredQuotes();
 
   if (remoteInvoices) {
+    const remoteInvoiceMap = {};
+    remoteInvoices.forEach(function (inv) {
+      const key = normalizeDocNumber(inv && inv.invoiceNumber);
+      if (key) remoteInvoiceMap[key] = inv;
+    });
+
+    const improvedLocalInvoices = localInvoices.filter(function (inv) {
+      const key = normalizeDocNumber(inv && inv.invoiceNumber);
+      if (!key) return false;
+      const remote = remoteInvoiceMap[key];
+      return shouldBackfillInvoiceFromLocal(normalizeInvoiceForStorage(inv), normalizeInvoiceForStorage(remote));
+    });
+
+    if (improvedLocalInvoices.length) {
+      await Promise.all(improvedLocalInvoices.map(function (inv) {
+        return syncInvoiceToServer(inv).catch(function () {});
+      }));
+    }
+
     const remoteInvoiceKeys = new Set(remoteInvoices.map(function (inv) {
       return normalizeDocNumber(inv && inv.invoiceNumber);
     }).filter(Boolean));
@@ -381,11 +415,11 @@ async function showInvoiceHistory() {
       invoice.status = "Paid";
       invoice.paidAt = s.paidAt || invoice.paidAt || null;
       const finalTotal = toAmount(invoice.finalTotal || invoice.total || calcItemsTotal(invoice.items));
-      invoice.amountPaid = Math.max(toAmount(s.amountPaid), finalTotal);
+      invoice.amountPaid = Math.max(toAmount(invoice.amountPaid), toAmount(s.amountPaid), finalTotal);
       invoice.balanceDue = 0;
     } else if (s && s.found && s.status) {
       invoice.status = s.status;
-      if (typeof s.amountPaid === "number") invoice.amountPaid = toAmount(s.amountPaid);
+      if (typeof s.amountPaid === "number") invoice.amountPaid = Math.max(toAmount(invoice.amountPaid), toAmount(s.amountPaid));
       if (typeof s.balanceDue === "number") invoice.balanceDue = toAmount(s.balanceDue);
     }
   }));
@@ -515,7 +549,7 @@ async function loadInvoice(invoiceNumber) {
       invoice.balanceDue = 0;
     } else {
       if (status.status) invoice.status = status.status;
-      if (typeof status.amountPaid === "number") invoice.amountPaid = toAmount(status.amountPaid);
+      if (typeof status.amountPaid === "number") invoice.amountPaid = Math.max(toAmount(invoice.amountPaid), toAmount(status.amountPaid));
       if (typeof status.balanceDue === "number") invoice.balanceDue = toAmount(status.balanceDue);
     }
   }

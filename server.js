@@ -78,6 +78,33 @@ function requireMongoReady() {
   }
 }
 
+function applyPaymentToInvoiceDoc(existing, paymentAmount, paidAt) {
+  const prevPaid = toAmount(existing && existing.amountPaid);
+  const finalTotal = toAmount((existing && (existing.finalTotal || existing.total)) || 0);
+  const paidNow = Math.max(0, toAmount(paymentAmount));
+
+  let nextAmountPaid = prevPaid + paidNow;
+  if (finalTotal > 0) {
+    nextAmountPaid = Math.min(nextAmountPaid, finalTotal);
+  }
+
+  let nextBalanceDue = 0;
+  if (finalTotal > 0) {
+    nextBalanceDue = Math.max(0, finalTotal - nextAmountPaid);
+  } else {
+    nextBalanceDue = Math.max(0, toAmount(existing && existing.balanceDue) - paidNow);
+  }
+
+  const nextStatus = nextBalanceDue <= 0 ? "Paid" : "Partial";
+
+  return {
+    amountPaid: nextAmountPaid,
+    balanceDue: nextBalanceDue,
+    status: nextStatus,
+    paidAt: paidAt || new Date()
+  };
+}
+
 const transientQuoteStatus = new Map();
 let mongoConnectInFlight = false;
 let lastMongoError = "";
@@ -195,15 +222,18 @@ app.post("/webhook", express.raw({ type: "application/json" }), async (req, res)
     const invoiceNumber = String((session.metadata && session.metadata.invoiceNumber) || "").trim();
 
     if (invoiceNumber) {
+      const existingInvoice = await Invoice.findOne({ invoiceNumber: invoiceNumber }).lean().catch(function () { return null; });
+      const paidCalc = applyPaymentToInvoiceDoc(existingInvoice, Number((session.amount_total || 0) / 100), new Date());
+
       await Invoice.updateOne(
         { invoiceNumber: invoiceNumber },
         {
           $set: {
             invoiceNumber: invoiceNumber,
-            status: "Paid",
-            amountPaid: Number((session.amount_total || 0) / 100),
-            balanceDue: 0,
-            paidAt: new Date()
+            status: paidCalc.status,
+            amountPaid: paidCalc.amountPaid,
+            balanceDue: paidCalc.balanceDue,
+            paidAt: paidCalc.paidAt
           }
         },
         { upsert: true }
@@ -537,15 +567,18 @@ app.post("/confirm-payment", async (req, res) => {
     }
 
     const paidAt = new Date();
+    const existingInvoice = await Invoice.findOne({ invoiceNumber: invoiceNumber }).lean().catch(function () { return null; });
+    const paidCalc = applyPaymentToInvoiceDoc(existingInvoice, Number((session.amount_total || 0) / 100), paidAt);
+
     await Invoice.updateOne(
       { invoiceNumber: invoiceNumber },
       {
         $set: {
           invoiceNumber: invoiceNumber,
-          status: "Paid",
-          amountPaid: Number((session.amount_total || 0) / 100),
-          balanceDue: 0,
-          paidAt: paidAt
+          status: paidCalc.status,
+          amountPaid: paidCalc.amountPaid,
+          balanceDue: paidCalc.balanceDue,
+          paidAt: paidCalc.paidAt
         }
       },
       { upsert: true }
