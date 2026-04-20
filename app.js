@@ -419,8 +419,14 @@ function runAppInitOnce() {
     // Show dashboard immediately (empty), then sync and reload dashboard
     showDashboard();
     syncAccountDocuments().then(() => {
-      // After sync, reload dashboard to show new data
-      setTimeout(showDashboard, 100);
+      // After sync, refresh quote statuses, then reload dashboard to show new data
+      if (typeof refreshAllQuoteStatuses === "function") {
+        refreshAllQuoteStatuses().then(() => {
+          setTimeout(showDashboard, 100);
+        }).catch(() => setTimeout(showDashboard, 100));
+      } else {
+        setTimeout(showDashboard, 100);
+      }
     }).catch(() => {});
   } else {
     showDashboard();
