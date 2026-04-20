@@ -422,10 +422,10 @@ function runAppInitOnce() {
       // After sync, refresh quote statuses, then reload dashboard to show new data
       if (typeof refreshAllQuoteStatuses === "function") {
         refreshAllQuoteStatuses().then(() => {
-          setTimeout(showDashboard, 100);
-        }).catch(() => setTimeout(showDashboard, 100));
+          setTimeout(showDashboard, 350);
+        }).catch(() => setTimeout(showDashboard, 350));
       } else {
-        setTimeout(showDashboard, 100);
+        setTimeout(showDashboard, 350);
       }
     }).catch(() => {});
   } else {
