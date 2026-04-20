@@ -307,15 +307,34 @@ function createDoc() {
 
 function convertQuoteToInvoice(quoteData) {
   const q = quoteData || getDocumentData();
+  const subtotal = toAmount(q.total || calcItemsTotal(q.items));
+  const hasTaxPercent = q.taxPercent !== null && q.taxPercent !== undefined && String(q.taxPercent).trim() !== "";
+  const taxPercent = hasTaxPercent ? toAmount(q.taxPercent) : "";
+  const taxAmount = hasTaxPercent ? (subtotal * (taxPercent / 100)) : toAmount(q.taxAmount);
+  const finalTotal = toAmount(q.finalTotal || (subtotal + taxAmount));
+  const amountPaid = toAmount(q.amountPaid);
+  const balanceDue = Math.max(0, toAmount(q.balanceDue || (finalTotal - amountPaid)));
+  const status = balanceDue <= 0 ? "Paid" : (amountPaid > 0 ? "Partial" : "Unpaid");
+
   const invoice = Object.assign({}, q, {
     quoteNumber: "",
     invoiceNumber: getNextInvoiceNumber(),
     date: new Date().toLocaleString(),
-    status: "Unpaid",
-    amountPaid: Number(q.amountPaid || 0)
+    taxPercent: taxPercent,
+    total: subtotal,
+    taxAmount: taxAmount,
+    finalTotal: finalTotal,
+    amountPaid: amountPaid,
+    balanceDue: balanceDue,
+    status: status
   });
-  refreshInvoiceComputedFields(invoice);
+
+  // Preserve quote-calculated financials when taxPercent is missing in older records.
+  if (hasTaxPercent) {
+    refreshInvoiceComputedFields(invoice);
+  }
   const saveResult = saveInvoice(invoice) || { saved: true };
+  syncInvoiceToServer(invoice).catch(function () {});
   App.activeInvoiceNumber = String(invoice.invoiceNumber || "").trim();
   App.activeQuoteNumber = "";
   setQuoteReadOnly(false);

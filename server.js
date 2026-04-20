@@ -318,9 +318,11 @@ const Quote = mongoose.model("Quote", {
   date: String,
   dueDate: String,
   notes: String,
+  taxPercent: Number,
   total: Number,
   taxAmount: Number,
   finalTotal: Number,
+  amountPaid: Number,
   balanceDue: Number,
   items: Array,
   status: { type: String, default: "Pending" },
@@ -715,6 +717,7 @@ app.post("/send-email", async (req, res) => {
 
     const total = toAmount(body.total) || itemsSubtotal;
     const taxAmount = toAmount(body.taxAmount);
+    const taxPercent = toAmount(body.taxPercent);
     const finalTotal = toAmount(body.finalTotal) || (total + taxAmount);
     const amountPaid = toAmount(body.amountPaid); // ✅ add
     const balanceDue = toAmount(body.balanceDue) || Math.max(0, finalTotal - amountPaid); // ✅ fix fallback
@@ -899,9 +902,11 @@ app.post("/save-quote", async (req, res) => {
           dueDate: cleanText(body.dueDate, 40),
           notes: cleanText(body.notes, 2000),
           items,
+          taxPercent,
           total,
           taxAmount,
           finalTotal,
+          amountPaid,
           balanceDue,
           status: cleanText(body.status || "Pending", 40)
         },
