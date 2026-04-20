@@ -1,7 +1,7 @@
 {
   "name": "QuickInvoice Pro",
   "short_name": "Invoice Pro",
-  "start_url": "./invoice.html?v=20260419f",
+  "start_url": "./invoice.html?v=20260419g",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#007bff",
