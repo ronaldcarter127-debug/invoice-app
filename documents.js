@@ -268,8 +268,43 @@ async function syncInvoiceToServer(invoiceData) {
   await postJsonWithTimeout(`${API_BASE_URL}/save-invoice`, invoice, 8000);
 }
 
+function remapQuoteNumberLocally(oldQuoteNumber, newQuoteNumber) {
+  const from = normalizeDocNumber(oldQuoteNumber);
+  const to = normalizeDocNumber(newQuoteNumber);
+  if (!from || !to || from === to) return;
+
+  const list = getStoredQuotes();
+  let changed = false;
+  const next = list.map(function (q) {
+    if (normalizeDocNumber(q && q.quoteNumber) !== from) return q;
+    changed = true;
+    const updated = Object.assign({}, q || {});
+    updated.quoteNumber = to;
+    return updated;
+  });
+
+  if (changed) {
+    saveStoredQuotes(next);
+    if (normalizeDocNumber(App.activeQuoteNumber) === from) {
+      App.activeQuoteNumber = to;
+    }
+  }
+}
+
 async function syncQuoteToServer(quoteData) {
-  await postJsonWithTimeout(`${API_BASE_URL}/save-quote`, quoteData || {}, 8000);
+  const payload = Object.assign({}, quoteData || {});
+  const oldQuoteNumber = normalizeDocNumber(payload.quoteNumber);
+  const result = await postJsonWithTimeout(`${API_BASE_URL}/save-quote`, payload, 8000);
+
+  const savedQuoteNumber = normalizeDocNumber(result && result.quoteNumber);
+  if (oldQuoteNumber && savedQuoteNumber && oldQuoteNumber !== savedQuoteNumber) {
+    remapQuoteNumberLocally(oldQuoteNumber, savedQuoteNumber);
+    if (quoteData && typeof quoteData === "object") {
+      quoteData.quoteNumber = savedQuoteNumber;
+    }
+  }
+
+  return result;
 }
 
 // ─── create ───────────────────────────────────────────────────────────────────

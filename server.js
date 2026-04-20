@@ -882,6 +882,7 @@ app.post("/save-quote", async (req, res) => {
 
     const items = Array.isArray(body.items) ? body.items : [];
     const total = toAmount(body.total) || calcItemsSubtotal(items);
+    const taxPercent = toAmount(body.taxPercent);
     const taxAmount = toAmount(body.taxAmount);
     const finalTotal = toAmount(body.finalTotal) || (total + taxAmount);
     const amountPaid = toAmount(body.amountPaid); // ✅ add
@@ -889,33 +890,49 @@ app.post("/save-quote", async (req, res) => {
 
     const ownerId = String(auth.user._id || "").trim();
 
-    await Quote.updateOne(
-      { quoteNumber },
-      {
-        $set: {
-          ownerId,
-          quoteNumber,
-          email: cleanText(body.to || body.email, 254),
-          customer: cleanText(body.customer, 120),
-          businessName: cleanText(body.businessName || "JobFlow Pro", 120),
-          date: cleanText(body.date, 40),
-          dueDate: cleanText(body.dueDate, 40),
-          notes: cleanText(body.notes, 2000),
-          items,
-          taxPercent,
-          total,
-          taxAmount,
-          finalTotal,
-          amountPaid,
-          balanceDue,
-          status: cleanText(body.status || "Pending", 40)
-        },
-        $setOnInsert: { created: new Date() }
-      },
-      { upsert: true }
-    );
+    const payload = {
+      ownerId,
+      email: cleanText(body.to || body.email, 254),
+      customer: cleanText(body.customer, 120),
+      businessName: cleanText(body.businessName || "JobFlow Pro", 120),
+      date: cleanText(body.date, 40),
+      dueDate: cleanText(body.dueDate, 40),
+      notes: cleanText(body.notes, 2000),
+      items,
+      taxPercent,
+      total,
+      taxAmount,
+      finalTotal,
+      amountPaid,
+      balanceDue,
+      status: cleanText(body.status || "Pending", 40)
+    };
 
-    return res.json({ success: true });
+    let savedQuoteNumber = quoteNumber;
+    try {
+      await Quote.updateOne(
+        { ownerId, quoteNumber },
+        {
+          $set: Object.assign({}, payload, { quoteNumber }),
+          $setOnInsert: { created: new Date() }
+        },
+        { upsert: true }
+      );
+    } catch (saveErr) {
+      if (!(saveErr && Number(saveErr.code) === 11000)) throw saveErr;
+
+      savedQuoteNumber = "Q-" + Date.now() + "-" + String(Math.floor(Math.random() * 10000)).padStart(4, "0");
+      await Quote.updateOne(
+        { ownerId, quoteNumber: savedQuoteNumber },
+        {
+          $set: Object.assign({}, payload, { quoteNumber: savedQuoteNumber }),
+          $setOnInsert: { created: new Date() }
+        },
+        { upsert: true }
+      );
+    }
+
+    return res.json({ success: true, quoteNumber: savedQuoteNumber });
   } catch (e) {
     return res.status(500).json({ success: false, error: e.message });
   }
