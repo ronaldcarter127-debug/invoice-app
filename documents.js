@@ -173,12 +173,45 @@ async function syncAccountDocuments() {
   const remoteInvoices = Array.isArray(results[0]) ? results[0].map(normalizeInvoiceForStorage) : null;
   const remoteQuotes = Array.isArray(results[1]) ? results[1] : null;
 
+  const localInvoices = getStoredInvoices();
+  const localQuotes = getStoredQuotes();
+
   if (remoteInvoices) {
-    const mergedInvoices = mergeByKey(getStoredInvoices(), remoteInvoices, "invoiceNumber");
+    const remoteInvoiceKeys = new Set(remoteInvoices.map(function (inv) {
+      return normalizeDocNumber(inv && inv.invoiceNumber);
+    }).filter(Boolean));
+
+    const missingLocalInvoices = localInvoices.filter(function (inv) {
+      const key = normalizeDocNumber(inv && inv.invoiceNumber);
+      return key && !remoteInvoiceKeys.has(key);
+    });
+
+    if (missingLocalInvoices.length) {
+      await Promise.all(missingLocalInvoices.map(function (inv) {
+        return syncInvoiceToServer(inv).catch(function () {});
+      }));
+    }
+
+    const mergedInvoices = mergeByKey(localInvoices, remoteInvoices, "invoiceNumber");
     writeJson("invoiceHistory", mergedInvoices);
   }
   if (remoteQuotes) {
-    const mergedQuotes = mergeByKey(getStoredQuotes(), remoteQuotes, "quoteNumber");
+    const remoteQuoteKeys = new Set(remoteQuotes.map(function (q) {
+      return normalizeDocNumber(q && q.quoteNumber);
+    }).filter(Boolean));
+
+    const missingLocalQuotes = localQuotes.filter(function (q) {
+      const key = normalizeDocNumber(q && q.quoteNumber);
+      return key && !remoteQuoteKeys.has(key);
+    });
+
+    if (missingLocalQuotes.length) {
+      await Promise.all(missingLocalQuotes.map(function (q) {
+        return syncQuoteToServer(q).catch(function () {});
+      }));
+    }
+
+    const mergedQuotes = mergeByKey(localQuotes, remoteQuotes, "quoteNumber");
     writeJson("quoteHistory", mergedQuotes);
   }
 }
