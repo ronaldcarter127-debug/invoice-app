@@ -1161,10 +1161,9 @@ async function syncAccountStateSilently(force) {
   // Do nothing
 }
 
-window.onload = async function() {
-  const authed = await ensureAuthenticated();
-  if (!authed) return;
-  await syncAccountStateSilently(true); // Always force sync on load
+
+// DEBUG: Bypass authentication and always show dashboard
+window.onload = function() {
   runAppInitOnce();
 };
 
