@@ -4,34 +4,21 @@
 <body style="font-family:Arial;padding:24px;">
   <h2>✅ Payment received</h2>
   <p>Thank you. Your payment was successful.</p>
+  <p style="color:#4b5563;">You can safely close this page.</p>
   <script>
 (function () {
   const params = new URLSearchParams(window.location.search);
   const invoiceNumber = String(params.get("invoice") || "").trim();
   const sessionId = String(params.get("session_id") || "").trim();
   const apiBase = "https://jobflow-api-bebm.onrender.com";
-  const target = "invoice.html?paid=1&invoice=" + encodeURIComponent(invoiceNumber);
-
-  function goBack() {
-    window.location.href = target;
-  }
-
-  if (!sessionId) {
-    setTimeout(goBack, 1200);
-    return;
-  }
+  if (!sessionId) return;
 
   fetch(apiBase + "/confirm-payment", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sessionId: sessionId, invoiceNumber: invoiceNumber })
   })
-    .then(function () {
-      setTimeout(goBack, 900);
-    })
-    .catch(function () {
-      setTimeout(goBack, 900);
-    });
+    .catch(function () {});
 })();
 </script>
 </body>

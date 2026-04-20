@@ -265,6 +265,7 @@ if (process.env.MONGO_URI) {
 
 // 📦 SCHEMA
 const Invoice = mongoose.model("Invoice", {
+  ownerId: { type: String, index: true },
   invoiceNumber: { type: String, index: true, unique: true, sparse: true },
   email: String,
   customer: String,
@@ -279,6 +280,7 @@ const Invoice = mongoose.model("Invoice", {
 
 // ✅ missing model
 const Quote = mongoose.model("Quote", {
+  ownerId: { type: String, index: true },
   quoteNumber: { type: String, index: true, unique: true, sparse: true },
   email: String,
   customer: String,
@@ -601,6 +603,10 @@ app.post("/create-premium-checkout", async (req, res) => {
 // �💾 SAVE INVOICE (upsert by invoiceNumber)
 app.post("/save-invoice", async (req, res) => {
   try {
+    requireMongoReady();
+    const auth = await getSessionUser(req);
+    if (!auth) return res.status(401).json({ success: false, error: "Unauthorized." });
+
     const body = req.body || {};
     const invoiceNumber = String(body.invoiceNumber || "").trim();
 
@@ -608,9 +614,14 @@ app.post("/save-invoice", async (req, res) => {
       return res.status(400).json({ success: false, error: "invoiceNumber is required." });
     }
 
+    const ownerId = String(auth.user._id || "").trim();
+
     await Invoice.updateOne(
       { invoiceNumber: invoiceNumber },
-      { $set: body, $setOnInsert: { created: new Date() } },
+      {
+        $set: Object.assign({}, body, { ownerId: ownerId }),
+        $setOnInsert: { created: new Date() }
+      },
       { upsert: true }
     );
 
@@ -632,7 +643,9 @@ app.get("/payment-status/:invoiceNumber", async (req, res) => {
       found: true,
       paid: String(invoice.status || "").toLowerCase() === "paid",
       status: invoice.status || "Unpaid",
-      paidAt: invoice.paidAt || null
+      paidAt: invoice.paidAt || null,
+      amountPaid: toAmount(invoice.amountPaid),
+      balanceDue: toAmount(invoice.balanceDue)
     });
   } catch (error) {
     res.status(500).json({ found: false, paid: false, error: error.message });
@@ -792,7 +805,26 @@ app.post("/send-email", async (req, res) => {
 // 📄 GET INVOICES
 app.get("/invoices", async (req, res) => {
   try {
-    const data = await Invoice.find().sort({ created: -1 });
+    requireMongoReady();
+    const auth = await getSessionUser(req);
+    if (!auth) return res.status(401).json({ error: "Unauthorized." });
+
+    const ownerId = String(auth.user._id || "").trim();
+    const data = await Invoice.find({ ownerId: ownerId }).sort({ created: -1 });
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/quotes", async (req, res) => {
+  try {
+    requireMongoReady();
+    const auth = await getSessionUser(req);
+    if (!auth) return res.status(401).json({ error: "Unauthorized." });
+
+    const ownerId = String(auth.user._id || "").trim();
+    const data = await Quote.find({ ownerId: ownerId }).sort({ created: -1 });
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -802,6 +834,10 @@ app.get("/invoices", async (req, res) => {
 // Save/Upsert quote
 app.post("/save-quote", async (req, res) => {
   try {
+    requireMongoReady();
+    const auth = await getSessionUser(req);
+    if (!auth) return res.status(401).json({ success: false, error: "Unauthorized." });
+
     const body = req.body || {};
     const quoteNumber = cleanText(body.quoteNumber, 80);
     if (!quoteNumber) {
@@ -815,10 +851,13 @@ app.post("/save-quote", async (req, res) => {
     const amountPaid = toAmount(body.amountPaid); // ✅ add
     const balanceDue = toAmount(body.balanceDue) || Math.max(0, finalTotal - amountPaid); // ✅ add
 
+    const ownerId = String(auth.user._id || "").trim();
+
     await Quote.updateOne(
       { quoteNumber },
       {
         $set: {
+          ownerId,
           quoteNumber,
           email: cleanText(body.to || body.email, 254),
           customer: cleanText(body.customer, 120),

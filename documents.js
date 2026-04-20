@@ -53,11 +53,23 @@ async function readJsonSafe(response) {
   try { return JSON.parse(text); } catch (_) { return { raw: text }; }
 }
 
-async function fetchJsonWithTimeout(url, timeoutMs) {
+async function fetchJsonWithTimeout(url, timeoutMs, fetchOptions) {
   const controller = new AbortController();
   const timer = setTimeout(function () { controller.abort(); }, Number(timeoutMs) || 2000);
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const options = Object.assign({}, fetchOptions || {});
+    const headers = Object.assign({}, options.headers || {});
+    const token = (typeof getAuthToken === "function") ? String(getAuthToken() || "").trim() : "";
+    if (token && !headers.Authorization) {
+      headers.Authorization = "Bearer " + token;
+    }
+    if (options.method && String(options.method).toUpperCase() !== "GET" && !headers["Content-Type"]) {
+      headers["Content-Type"] = "application/json";
+    }
+    options.headers = headers;
+    options.signal = controller.signal;
+
+    const response = await fetch(url, options);
     if (!response.ok) return null;
     return await response.json();
   } catch (_) {
@@ -65,6 +77,13 @@ async function fetchJsonWithTimeout(url, timeoutMs) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function postJsonWithTimeout(url, payload, timeoutMs) {
+  return fetchJsonWithTimeout(url, timeoutMs, {
+    method: "POST",
+    body: JSON.stringify(payload || {})
+  });
 }
 
 // ─── invoice computed fields ──────────────────────────────────────────────────
@@ -109,6 +128,70 @@ async function refreshAllQuoteStatuses() {
   saveStoredQuotes(quotes);
 }
 
+function mergeByKey(localRows, remoteRows, keyField) {
+  const merged = [];
+  const seen = new Set();
+
+  (Array.isArray(remoteRows) ? remoteRows : []).forEach(function (row) {
+    const key = normalizeDocNumber(row && row[keyField]);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    merged.push(row);
+  });
+
+  (Array.isArray(localRows) ? localRows : []).forEach(function (row) {
+    const key = normalizeDocNumber(row && row[keyField]);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    merged.push(row);
+  });
+
+  return merged;
+}
+
+function normalizeInvoiceForStorage(invoice) {
+  const row = Object.assign({}, invoice || {});
+  const paid = String(row.status || "").toLowerCase() === "paid";
+  row.amountPaid = toAmount(row.amountPaid);
+  row.finalTotal = toAmount(row.finalTotal || row.total || calcItemsTotal(row.items));
+  if (paid && row.finalTotal > row.amountPaid) {
+    row.amountPaid = row.finalTotal;
+  }
+  row.balanceDue = paid ? 0 : Math.max(0, toAmount(row.balanceDue || (row.finalTotal - row.amountPaid)));
+  return row;
+}
+
+async function syncAccountDocuments() {
+  const token = (typeof getAuthToken === "function") ? String(getAuthToken() || "").trim() : "";
+  if (!token) return;
+
+  const results = await Promise.all([
+    fetchJsonWithTimeout(`${API_BASE_URL}/invoices`, 8000),
+    fetchJsonWithTimeout(`${API_BASE_URL}/quotes`, 8000)
+  ]);
+
+  const remoteInvoices = Array.isArray(results[0]) ? results[0].map(normalizeInvoiceForStorage) : null;
+  const remoteQuotes = Array.isArray(results[1]) ? results[1] : null;
+
+  if (remoteInvoices) {
+    const mergedInvoices = mergeByKey(getStoredInvoices(), remoteInvoices, "invoiceNumber");
+    writeJson("invoiceHistory", mergedInvoices);
+  }
+  if (remoteQuotes) {
+    const mergedQuotes = mergeByKey(getStoredQuotes(), remoteQuotes, "quoteNumber");
+    writeJson("quoteHistory", mergedQuotes);
+  }
+}
+
+async function syncInvoiceToServer(invoiceData) {
+  const invoice = normalizeInvoiceForStorage(invoiceData);
+  await postJsonWithTimeout(`${API_BASE_URL}/save-invoice`, invoice, 8000);
+}
+
+async function syncQuoteToServer(quoteData) {
+  await postJsonWithTimeout(`${API_BASE_URL}/save-quote`, quoteData || {}, 8000);
+}
+
 // ─── create ───────────────────────────────────────────────────────────────────
 
 function createQuote() {
@@ -128,6 +211,7 @@ function createQuote() {
   clearAcceptedQuoteBanner();
   setInvoiceEditingLocked(false, "");
   saveQuote(data);
+  syncQuoteToServer(data).catch(function () {});
   renderDocument("Quote", data, true);
   resetEntryFieldsAfterCreate();
   showOutputView();
@@ -145,6 +229,7 @@ function createDoc() {
   clearAcceptedQuoteBanner();
   refreshInvoiceComputedFields(data);
   const saveResult = saveInvoice(data) || { saved: true };
+  syncInvoiceToServer(data).catch(function () {});
   renderDocument("Invoice", data, false);
   resetEntryFieldsAfterCreate();
   showOutputView();
@@ -192,6 +277,7 @@ function markInvoiceAsPaid(invoiceData) {
 async function showQuoteHistory(filter) {
   if (typeof showSpinner === "function") showSpinner("Loading quotes...");
   try {
+  await syncAccountDocuments();
   await refreshAllQuoteStatuses();
   const normalizedFilter = String(filter || "all").toLowerCase();
   const quotes = getStoredQuotes();
@@ -242,6 +328,7 @@ function showAcceptedQuotes() { return showQuoteHistory("accepted"); }
 async function showInvoiceHistory() {
   if (typeof showSpinner === "function") showSpinner("Syncing invoices...");
   try {
+  await syncAccountDocuments();
   let invoices = refreshAllInvoiceStatuses();
   if (!invoices.length) { displayInvoice("<div class='invoice-box'><p>No invoices found.</p></div>"); return; }
 
@@ -260,9 +347,13 @@ async function showInvoiceHistory() {
     if (s && s.found && s.paid) {
       invoice.status = "Paid";
       invoice.paidAt = s.paidAt || invoice.paidAt || null;
+      const finalTotal = toAmount(invoice.finalTotal || invoice.total || calcItemsTotal(invoice.items));
+      invoice.amountPaid = Math.max(toAmount(s.amountPaid), finalTotal);
       invoice.balanceDue = 0;
     } else if (s && s.found && s.status) {
       invoice.status = s.status;
+      if (typeof s.amountPaid === "number") invoice.amountPaid = toAmount(s.amountPaid);
+      if (typeof s.balanceDue === "number") invoice.balanceDue = toAmount(s.balanceDue);
     }
   }));
 
@@ -374,12 +465,28 @@ function deleteQuote(quoteNumber) {
   showQuoteHistory();
 }
 
-function loadInvoice(invoiceNumber) {
+async function loadInvoice(invoiceNumber) {
   const target = normalizeDocNumber(invoiceNumber);
-  const invoice = refreshAllInvoiceStatuses().find(function (i) {
+  let invoice = refreshAllInvoiceStatuses().find(function (i) {
     return normalizeDocNumber(i.invoiceNumber) === target;
   });
   if (!invoice) { alert("Invoice not found."); return; }
+
+  const status = await fetchJsonWithTimeout(`${API_BASE_URL}/payment-status/${encodeURIComponent(target)}`, 6000);
+  if (status && status.found) {
+    if (status.paid) {
+      invoice.status = "Paid";
+      invoice.paidAt = status.paidAt || invoice.paidAt || null;
+      const finalTotal = toAmount(invoice.finalTotal || invoice.total || calcItemsTotal(invoice.items));
+      invoice.amountPaid = Math.max(toAmount(status.amountPaid), finalTotal);
+      invoice.balanceDue = 0;
+    } else {
+      if (status.status) invoice.status = status.status;
+      if (typeof status.amountPaid === "number") invoice.amountPaid = toAmount(status.amountPaid);
+      if (typeof status.balanceDue === "number") invoice.balanceDue = toAmount(status.balanceDue);
+    }
+  }
+
   App.activeInvoiceNumber = normalizeDocNumber(invoice.invoiceNumber);
   App.activeQuoteNumber = "";
   setQuoteReadOnly(false);
@@ -705,6 +812,7 @@ window.deleteInvoice = deleteInvoice;
 window.showQuoteHistory = showQuoteHistory;
 window.showAcceptedQuotes = showAcceptedQuotes;
 window.showInvoiceHistory = showInvoiceHistory;
+window.syncAccountDocuments = syncAccountDocuments;
 window.saveCurrentAsTemplate = saveCurrentAsTemplate;
 window.applySelectedTemplate = applySelectedTemplate;
 window.refreshInvoiceComputedFields = refreshInvoiceComputedFields;

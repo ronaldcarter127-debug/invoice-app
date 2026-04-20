@@ -228,6 +228,10 @@ function runAppInitOnce() {
   }
 
   showDashboard();
+
+  if (typeof syncAccountDocuments === "function") {
+    syncAccountDocuments().catch(function () {});
+  }
 }
 
 function setInvoiceEditingLocked(locked, invoiceNumber) {
@@ -833,6 +837,10 @@ async function syncAccountStateSilently(force) {
     updateDashboardAccountSync();
     checkPremium();
     updateDashboard();
+
+    if (typeof syncAccountDocuments === "function") {
+      await syncAccountDocuments();
+    }
 
     const accountView = document.getElementById("accountView");
     if (accountView && accountView.style.display !== "none") {
