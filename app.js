@@ -1175,8 +1175,11 @@ async function syncAccountStateSilently(force) {
     markAccountSynced();
     updateDashboardAccountSync();
 
+
     if (typeof syncAccountDocuments === "function") {
       await syncAccountDocuments();
+      markAccountSynced();
+      updateDashboardAccountSync();
     }
 
     checkPremium();
