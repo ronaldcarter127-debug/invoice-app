@@ -131,6 +131,47 @@ function getTransientQuoteStatus(quoteNumber) {
   return value;
 }
 
+function quoteSemanticKey(quote) {
+  const q = quote || {};
+  const items = Array.isArray(q.items) ? q.items : [];
+  const itemKey = items.map(function (it) {
+    const name = cleanText(it && it.name, 120).toLowerCase();
+    const qty = Math.max(0, Number(it && it.qty || 0) || 0);
+    const price = toAmount(it && it.price);
+    return name + "|" + qty + "|" + price.toFixed(2);
+  }).join(";");
+
+  return [
+    cleanText(q.customer, 120).toLowerCase(),
+    toAmount(q.total).toFixed(2),
+    toAmount(q.taxAmount).toFixed(2),
+    toAmount(q.finalTotal).toFixed(2),
+    toAmount(q.amountPaid).toFixed(2),
+    toAmount(q.balanceDue).toFixed(2),
+    cleanText(q.notes, 400).toLowerCase(),
+    itemKey
+  ].join("||");
+}
+
+function choosePreferredQuoteDoc(a, b) {
+  if (!a) return b;
+  if (!b) return a;
+
+  const aAccepted = String(a.status || "").toLowerCase() === "accepted";
+  const bAccepted = String(b.status || "").toLowerCase() === "accepted";
+  if (aAccepted !== bAccepted) return bAccepted ? b : a;
+
+  const aAcceptedAt = new Date(a.acceptedAt || 0).getTime() || 0;
+  const bAcceptedAt = new Date(b.acceptedAt || 0).getTime() || 0;
+  if (aAcceptedAt !== bAcceptedAt) return bAcceptedAt > aAcceptedAt ? b : a;
+
+  const aCreated = new Date(a.created || 0).getTime() || 0;
+  const bCreated = new Date(b.created || 0).getTime() || 0;
+  if (aCreated !== bCreated) return bCreated > aCreated ? b : a;
+
+  return String(b.quoteNumber || "") > String(a.quoteNumber || "") ? b : a;
+}
+
 function makeSalt() {
   return crypto.randomBytes(16).toString("hex");
 }
@@ -864,6 +905,42 @@ app.get("/quotes", async (req, res) => {
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/maintenance/dedupe-quotes", async (req, res) => {
+  try {
+    requireMongoReady();
+    const auth = await getSessionUser(req);
+    if (!auth) return res.status(401).json({ ok: false, error: "Unauthorized." });
+
+    const ownerId = String(auth.user._id || "").trim();
+    const quotes = await Quote.find({ ownerId: ownerId }).lean();
+
+    const bySemantic = {};
+    const toDeleteIds = [];
+
+    quotes.forEach(function (q) {
+      const key = quoteSemanticKey(q);
+      const existing = bySemantic[key];
+      if (!existing) {
+        bySemantic[key] = q;
+        return;
+      }
+
+      const keep = choosePreferredQuoteDoc(existing, q);
+      const drop = keep === existing ? q : existing;
+      bySemantic[key] = keep;
+      if (drop && drop._id) toDeleteIds.push(drop._id);
+    });
+
+    if (toDeleteIds.length) {
+      await Quote.deleteMany({ _id: { $in: toDeleteIds } });
+    }
+
+    return res.json({ ok: true, scanned: quotes.length, deleted: toDeleteIds.length });
+  } catch (error) {
+    return res.status(500).json({ ok: false, error: error.message || "Quote dedupe failed." });
   }
 });
 

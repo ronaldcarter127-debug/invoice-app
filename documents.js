@@ -187,7 +187,6 @@ function getQuoteSemanticKey(quote) {
 
   return [
     String(q.customer || "").trim().toLowerCase(),
-    String(q.date || "").trim(),
     Number(q.total || 0).toFixed(2),
     Number(q.taxAmount || 0).toFixed(2),
     Number(q.finalTotal || 0).toFixed(2),
@@ -262,6 +261,29 @@ function shouldBackfillInvoiceFromLocal(localInvoice, remoteInvoice) {
   return false;
 }
 
+function getCurrentAuthUserId() {
+  try {
+    const raw = localStorage.getItem("authUser");
+    const parsed = raw ? JSON.parse(raw) : null;
+    return normalizeDocNumber(parsed && (parsed.id || parsed.email));
+  } catch (_) {
+    return "";
+  }
+}
+
+async function runQuoteDedupeMaintenanceOnce() {
+  const userId = getCurrentAuthUserId();
+  if (!userId) return;
+
+  const key = "quoteDedupeRun:" + userId;
+  if (localStorage.getItem(key) === "1") return;
+
+  const result = await postJsonWithTimeout(`${API_BASE_URL}/maintenance/dedupe-quotes`, {}, 12000);
+  if (result && result.ok) {
+    localStorage.setItem(key, "1");
+  }
+}
+
 async function syncAccountDocuments() {
   const token = (typeof getAuthToken === "function") ? String(getAuthToken() || "").trim() : "";
   if (!token) return;
@@ -270,6 +292,8 @@ async function syncAccountDocuments() {
   const localQuotes = dedupeQuotesByContent(normalizeLocalQuotesForSync(getStoredQuotes()));
 
   writeJson("quoteHistory", localQuotes);
+
+  await runQuoteDedupeMaintenanceOnce().catch(function () {});
 
   // First, try to upsert local docs so whichever device has the latest entries
   // can seed the account dataset for other devices.
