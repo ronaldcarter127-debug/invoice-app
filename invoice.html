@@ -10,7 +10,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>JobFlow Pro</title>
-<link rel="manifest" href="manifest.json?v=20260419k">
+<link rel="manifest" href="manifest.json?v=20260419l">
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Allura&family=Alex+Brush&display=swap" rel="stylesheet">
 
 <style>
@@ -143,34 +143,127 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 }
 
 /* ── Dashboard ── */
-#dashboard {display:block;}
+#dashboard {
+  display:block;
+  background:
+    radial-gradient(120% 100% at 95% 10%, rgba(245, 158, 11, 0.14), transparent 52%),
+    radial-gradient(140% 120% at 0% 100%, rgba(29, 78, 216, 0.12), transparent 55%),
+    linear-gradient(180deg, #070b17, #090f1e 68%, #080c17);
+  border:1px solid #1e2a46;
+  box-shadow:0 18px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03);
+  max-width:740px;
+  margin:0 auto 14px auto;
+  position:relative;
+  overflow:hidden;
+}
+#dashboard::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(110deg, rgba(245, 158, 11, 0.04), transparent 32%, transparent 68%, rgba(56, 189, 248, 0.04));
+}
 #appContainer {display:none;}
-.dash-grid {display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;}
-.dash-card {
-  background:#1f2937;
+
+.dash-welcome {font-size:13px;color:#9ca3af;letter-spacing:0.4px;margin:0 0 8px 0;position:relative;z-index:1;}
+
+.dash-hero-btn {
+  width:100%;
   border-radius:14px;
-  padding:24px 16px;
-  text-align:center;
+  border:1px solid rgba(245, 158, 11, 0.38);
+  background:linear-gradient(180deg, rgba(245,158,11,0.11), rgba(245,158,11,0.04));
+  color:#f8fafc;
+  box-shadow:0 0 0 1px rgba(245, 158, 11, 0.18), 0 0 24px rgba(245, 158, 11, 0.18);
+  padding:14px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-align:left;
   cursor:pointer;
-  border:2px solid #374151;
+  position:relative;
+  z-index:1;
+}
+.dash-hero-btn:hover {box-shadow:0 0 0 1px rgba(245, 158, 11, 0.35), 0 0 30px rgba(245, 158, 11, 0.24);}
+.dash-hero-plus {
+  width:30px;
+  height:30px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#111827;
+  color:#f59e0b;
+  border:1px solid rgba(245,158,11,0.5);
+  font-size:20px;
+  font-weight:700;
+  flex-shrink:0;
+}
+.dash-hero-title {font-size:20px;font-weight:800;line-height:1.2;color:#fff;}
+.dash-hero-sub {font-size:12px;color:#d1d5db;margin-top:2px;}
+
+.dash-main-grid {display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-top:14px;position:relative;z-index:1;}
+.dash-column {display:grid;gap:12px;}
+.dash-panel {
+  background:linear-gradient(180deg, rgba(15,23,42,0.92), rgba(12,18,34,0.9));
+  border:1px solid #1f2a44;
+  border-radius:12px;
+  padding:12px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 22px rgba(0,0,0,0.32);
+}
+.dash-panel h3 {
+  margin:0 0 10px 0;
+  font-size:13px;
+  letter-spacing:0.45px;
+  text-transform:uppercase;
+  color:#f3f4f6;
+}
+.dash-panel-title-row {display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.dash-panel-title-row h3 {margin:0;}
+.dash-mini-link {font-size:11px;color:#f59e0b;}
+
+.dash-card {
+  width:100%;
+  border-radius:10px;
+  border:1px solid #2a3757;
+  background:linear-gradient(180deg, rgba(17,24,39,0.86), rgba(12,18,34,0.86));
+  padding:12px;
+  text-align:left;
+  cursor:pointer;
   transition:border-color 0.2s, transform 0.15s, box-shadow 0.2s;
   user-select:none;
 }
-.dash-card:hover {border-color:#00ee58;transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,238,88,0.15);}
-.dash-card:active {transform:scale(0.97);}
-.dash-card .dash-icon {font-size:38px;margin-bottom:10px;}
-.dash-card .dash-label {font-size:15px;font-weight:700;color:#f1f5f9;letter-spacing:0.3px;}
-.dash-card .dash-sub {font-size:12px;color:#6b7280;margin-top:4px;}
-.dash-card.premium-card {border-color:#f59e0b22;}
-.dash-card.premium-card:hover {border-color:#f59e0b;box-shadow:0 6px 20px rgba(245,158,11,0.15);}
+.dash-card:hover {border-color:#f59e0b;transform:translateY(-1px);box-shadow:0 8px 18px rgba(245,158,11,0.16);}
+.dash-card:active {transform:scale(0.99);}
+.dash-card .dash-icon {font-size:18px;margin-bottom:6px;opacity:0.95;}
+.dash-card .dash-label {font-size:14px;font-weight:700;color:#f8fafc;letter-spacing:0.2px;}
+.dash-card .dash-sub {font-size:11px;color:#9ca3af;margin-top:3px;line-height:1.35;}
+.dash-card.premium-card {border-color:#3a2f1a;}
+
+.dash-history-btn {
+  width:100%;
+  border-radius:10px;
+  border:1px solid rgba(245,158,11,0.35);
+  background:linear-gradient(180deg, rgba(245,158,11,0.13), rgba(245,158,11,0.04));
+  color:#f8fafc;
+  text-align:left;
+  padding:12px;
+  box-shadow:0 0 20px rgba(245,158,11,0.14);
+}
+.dash-history-btn .dash-label {font-size:14px;}
+
+.dash-side-stack {display:grid;gap:10px;}
+.dash-account-row {display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
 .dash-back {background:none;border:none;color:#6b7280;font-size:14px;padding:6px 0;margin-bottom:8px;cursor:pointer;text-align:left;width:auto;}
 .dash-back:hover {color:#00ee58;}
 @media (max-width: 480px) {
   body {padding:8px;}
-  .dash-grid {gap:10px;}
-  .dash-card {padding:18px 10px;}
-  .dash-card .dash-icon {font-size:32px;}
-  .dash-card .dash-label {font-size:14px;}
+  #dashboard {max-width:none;}
+  .dash-hero-title {font-size:18px;}
+  .dash-main-grid {grid-template-columns:1fr;gap:10px;}
+  .dash-card {padding:11px;}
+  .dash-card .dash-icon {font-size:16px;}
+  .dash-card .dash-label {font-size:13px;}
   .invoice-box, .preview {padding:12px;}
 }
 </style>
@@ -181,52 +274,76 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 
 <!-- ── DASHBOARD ── -->
 <div id="dashboard" class="card">
-  <h2 style="margin:0 0 4px 0;">JobFlow Pro</h2>
+  <p class="dash-welcome">Welcome back!</p>
   <div id="dashBanner" class="mode-banner" style="margin-bottom:12px;">
     <strong id="dashPlanBadge">Free Plan</strong>
     <span id="dashPlanMsg">Upgrade to unlock history features.</span>
   </div>
-  <div class="dash-grid">
-    <button type="button" class="dash-card" id="dashCreateInvoiceBtn" onclick="openForm('invoice')">
-      <div class="dash-icon">🧾</div>
-      <div class="dash-label">Create Invoice</div>
-      <div class="dash-sub">Bill a customer</div>
-    </button>
-    <button type="button" class="dash-card" id="dashCreateQuoteBtn" onclick="openForm('quote')">
-      <div class="dash-icon">📋</div>
-      <div class="dash-label">Create Quote</div>
-      <div class="dash-sub">Send a price estimate</div>
-    </button>
-    <button type="button" class="dash-card premium-card" id="dashInvHistory" onclick="openInvoiceHistory()">
-      <div class="dash-icon">📂</div>
-      <div class="dash-label">Invoice History</div>
-      <div class="dash-sub" id="dashInvSub">Free: up to 3 saved</div>
-    </button>
-    <button type="button" class="dash-card premium-card" id="dashQuoteHistory" onclick="openQuoteHistoryDash()">
-      <div class="dash-icon">📜</div>
-      <div class="dash-label">Quote History</div>
-      <div class="dash-sub">View past quotes</div>
-    </button>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
-    <button type="button" class="dash-card" id="dashCustomersBtn" onclick="openCustomerList()">
-      <div class="dash-icon">👥</div>
-      <div class="dash-label">Customers</div>
-      <div class="dash-sub">View &amp; manage</div>
-    </button>
-    <button type="button" class="dash-card" id="dashSettingsBtn" onclick="openSettings()">
-      <div class="dash-icon">⚙️</div>
-      <div class="dash-label">Business Info</div>
-      <div class="dash-sub">Logo, name, contact</div>
-    </button>
-  </div>
-  <div style="margin-top:14px;">
-    <button type="button" class="dash-card" id="dashAccountBtn" onclick="openAccountDetails()" style="width:100%;">
-      <div class="dash-icon">👤</div>
-      <div class="dash-label">Account Details</div>
-      <div class="dash-sub">Plan, login, and session info</div>
-      <div class="dash-sub" id="dashAccountSync" style="margin-top:6px;color:#94a3b8;">Last synced: never</div>
-    </button>
+
+  <button type="button" class="dash-hero-btn" id="dashCreateInvoiceBtn" onclick="openForm('invoice')">
+    <span class="dash-hero-plus">+</span>
+    <span>
+      <span class="dash-hero-title">Create New Invoice</span>
+      <span class="dash-hero-sub">Quickly generate and send it to your client.</span>
+    </span>
+  </button>
+
+  <div class="dash-main-grid">
+    <div class="dash-column">
+      <div class="dash-panel">
+        <div class="dash-panel-title-row">
+          <h3>Recent Activity</h3>
+          <span class="dash-mini-link">All</span>
+        </div>
+
+        <button type="button" class="dash-card" id="dashCreateQuoteBtn" onclick="openForm('quote')" style="margin-top:0;">
+          <div class="dash-icon">📋</div>
+          <div class="dash-label">Create Quote</div>
+          <div class="dash-sub">Prepare and send a professional estimate.</div>
+        </button>
+
+        <button type="button" class="dash-card premium-card" id="dashQuoteHistory" onclick="openQuoteHistoryDash()">
+          <div class="dash-icon">📜</div>
+          <div class="dash-label">Quote History</div>
+          <div class="dash-sub">Review all quotes and acceptance status.</div>
+        </button>
+
+        <button type="button" class="dash-history-btn" id="dashInvHistory" onclick="openInvoiceHistory()">
+          <div class="dash-label">📂 Invoice History</div>
+          <div class="dash-sub" id="dashInvSub">Free: up to 3 saved</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="dash-column">
+      <div class="dash-panel">
+        <h3>Customers</h3>
+        <div class="dash-side-stack">
+          <button type="button" class="dash-card" id="dashCustomersBtn" onclick="openCustomerList()" style="margin-top:0;">
+            <div class="dash-icon">👥</div>
+            <div class="dash-label">View &amp; Manage</div>
+            <div class="dash-sub">Manage your saved client list.</div>
+          </button>
+
+          <button type="button" class="dash-card" id="dashSettingsBtn" onclick="openSettings()" style="margin-top:0;">
+            <div class="dash-icon">⚙️</div>
+            <div class="dash-label">Business Settings</div>
+            <div class="dash-sub">Brand, logo, and contact details.</div>
+          </button>
+
+          <button type="button" class="dash-card" id="dashAccountBtn" onclick="openAccountDetails()" style="margin-top:0;">
+            <div class="dash-account-row">
+              <div>
+                <div class="dash-label">Account Details</div>
+                <div class="dash-sub">Plan and session info</div>
+              </div>
+              <div class="dash-icon" style="margin:0;">👤</div>
+            </div>
+            <div class="dash-sub" id="dashAccountSync" style="margin-top:8px;color:#94a3b8;">Last synced: never</div>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
   <button id="upgradeBtn" class="upgrade-btn" style="width:100%;margin-top:14px;" onclick="upgrade()">Upgrade to Premium</button>
 </div>
@@ -403,13 +520,13 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
   </div>
 </div>
 
-<script src="calculator.js?v=20260419k"></script>
-<script src="dom.js?v=20260419k"></script>
-<script src="storage.js?v=20260419k"></script>
-<script src="ui.js?v=20260419k"></script>
-<script src="business.js?v=20260419k"></script>
-<script src="documents.js?v=20260419k"></script>
-<script src="app.js?v=20260419k"></script>
+<script src="calculator.js?v=20260419l"></script>
+<script src="dom.js?v=20260419l"></script>
+<script src="storage.js?v=20260419l"></script>
+<script src="ui.js?v=20260419l"></script>
+<script src="business.js?v=20260419l"></script>
+<script src="documents.js?v=20260419l"></script>
+<script src="app.js?v=20260419l"></script>
 
 </body>
 </html>
