@@ -413,10 +413,7 @@ function runAppInitOnce() {
   }
 
   showDashboard();
-
-  if (typeof syncAccountDocuments === "function") {
-    syncAccountDocuments().catch(function () {});
-  }
+  // Removed auto-sync on every load for speed
 }
 
 function setInvoiceEditingLocked(locked, invoiceNumber) {
@@ -789,6 +786,10 @@ function showDashboard() {
   updateDashboard();
   updateDashboardAccountSync();
   loadAndDisplayDashboardPipelines();
+  // Only refresh quote statuses in background, do not sync all
+  if (typeof refreshAllQuoteStatuses === "function") {
+    setTimeout(() => { refreshAllQuoteStatuses().catch(() => {}); }, 100);
+  }
 }
 
 function updateDashboard() {

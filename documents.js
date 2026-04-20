@@ -518,48 +518,50 @@ function markInvoiceAsPaid(invoiceData) {
 async function showQuoteHistory(filter) {
   if (typeof showSpinner === "function") showSpinner("Loading quotes...");
   try {
-  await syncAccountDocuments();
-  await refreshAllQuoteStatuses();
-  const normalizedFilter = String(filter || "all").toLowerCase();
-  const quotes = dedupeQuotesByContent(getStoredQuotes());
-  saveStoredQuotes(quotes);
-  const filtered = normalizedFilter === "accepted"
-    ? quotes.filter(function (q) { return String(q.status || "").toLowerCase() === "accepted"; })
-    : quotes;
+    // Only refresh statuses in background, do not sync all
+    if (typeof refreshAllQuoteStatuses === "function") {
+      setTimeout(() => { refreshAllQuoteStatuses().catch(() => {}); }, 100);
+    }
+    const normalizedFilter = String(filter || "all").toLowerCase();
+    const quotes = dedupeQuotesByContent(getStoredQuotes());
+    saveStoredQuotes(quotes);
+    const filtered = normalizedFilter === "accepted"
+      ? quotes.filter(function (q) { return String(q.status || "").toLowerCase() === "accepted"; })
+      : quotes;
 
-  let html = "<div class='invoice-box'>";
-  html += "<h2>Quote History</h2>";
-  html += "<div class='history-tabs'>";
-  html += "<button type='button' class='history-tab " + (normalizedFilter === "all" ? "active" : "") + "' onclick=\"showQuoteHistory('all')\">All Quotes</button>";
-  html += "<button type='button' class='history-tab " + (normalizedFilter === "accepted" ? "active" : "") + "' onclick=\"showQuoteHistory('accepted')\">Accepted Quotes</button>";
-  html += "</div>";
+    let html = "<div class='invoice-box'>";
+    html += "<h2>Quote History</h2>";
+    html += "<div class='history-tabs'>";
+    html += "<button type='button' class='history-tab " + (normalizedFilter === 'all' ? 'active' : '') + "' onclick=\"showQuoteHistory('all')\" >All Quotes</button>";
+    html += "<button type='button' class='history-tab " + (normalizedFilter === 'accepted' ? 'active' : '') + "' onclick=\"showQuoteHistory('accepted')\" >Accepted Quotes</button>";
+    html += "</div>";
 
-  if (!filtered.length) {
-    html += "<p>No quotes found.</p></div>";
+    if (!filtered.length) {
+      html += "<p>No quotes found.</p></div>";
+      displayInvoice(html);
+      return;
+    }
+
+    filtered.slice().reverse().forEach(function (quote) {
+      const status = String(quote.status || "Pending");
+      const statusClass = "status-" + status.toLowerCase();
+      const quoteKey = normalizeDocNumber(quote.quoteNumber).replace(/'/g, "\\'");
+      html += "<div class='quote-entry'>";
+      html += "<div>";
+      html += "<strong>" + escapeHtml(normalizeDocNumber(quote.quoteNumber) || "No quote #") + "</strong> ";
+      html += "<span class='status-badge " + statusClass + "'>" + escapeHtml(status.toUpperCase()) + "</span><br>";
+      html += "<span>" + escapeHtml(quote.date || "No date") + "</span><br>";
+      html += "<span>" + escapeHtml(quote.customer || "No customer") + "</span>";
+      html += "</div>";
+      html += "<div>";
+      html += "<button type='button' onclick=\"loadQuote('" + quoteKey + "')\">Open</button> ";
+      html += "<button type='button' onclick=\"deleteQuote('" + quoteKey + "')\">Delete</button>";
+      html += "</div>";
+      html += "</div>";
+    });
+
+    html += "</div>";
     displayInvoice(html);
-    return;
-  }
-
-  filtered.slice().reverse().forEach(function (quote) {
-    const status = String(quote.status || "Pending");
-    const statusClass = "status-" + status.toLowerCase();
-    const quoteKey = normalizeDocNumber(quote.quoteNumber).replace(/'/g, "\\'");
-    html += "<div class='quote-entry'>";
-    html += "<div>";
-    html += "<strong>" + escapeHtml(normalizeDocNumber(quote.quoteNumber) || "No quote #") + "</strong> ";
-    html += "<span class='status-badge " + statusClass + "'>" + escapeHtml(status.toUpperCase()) + "</span><br>";
-    html += "<span>" + escapeHtml(quote.date || "No date") + "</span><br>";
-    html += "<span>" + escapeHtml(quote.customer || "No customer") + "</span>";
-    html += "</div>";
-    html += "<div>";
-    html += "<button type='button' onclick=\"loadQuote('" + quoteKey + "')\">Open</button> ";
-    html += "<button type='button' onclick=\"deleteQuote('" + quoteKey + "')\">Delete</button>";
-    html += "</div>";
-    html += "</div>";
-  });
-
-  html += "</div>";
-  displayInvoice(html);
   } finally {
     if (typeof hideSpinner === "function") hideSpinner();
   }
