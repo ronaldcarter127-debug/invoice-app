@@ -77,6 +77,62 @@
   </div>
 </div>
 
+<!-- ── DASHBOARD ── -->
+<div id="dashboard" style="display:block;">
+  <div class="card">
+    <div class="dash-welcome">Welcome to JobFlow Pro</div>
+    <div class="dash-entry-split">
+      <button id="dashCreateInvoiceBtn" class="dash-entry-btn invoice">
+        <span class="dash-entry-title">New Invoice</span>
+        <span class="dash-entry-sub">Create and send an invoice</span>
+      </button>
+      <button id="dashCreateQuoteBtn" class="dash-entry-btn quote">
+        <span class="dash-entry-title">New Quote</span>
+        <span class="dash-entry-sub">Send a quote for approval</span>
+      </button>
+    </div>
+    <div class="dash-main-grid">
+      <div class="dash-panel">
+        <div class="dash-panel-title-row">
+          <h3>Quotes</h3>
+          <span class="dash-mini-link" id="dashQuoteHistory">History</span>
+        </div>
+        <div id="dashQuotesPipeline"></div>
+      </div>
+      <div class="dash-panel">
+        <div class="dash-panel-title-row">
+          <h3>Invoices</h3>
+          <span class="dash-mini-link" id="dashInvHistory">History</span>
+        </div>
+        <div id="dashInvoicesPipeline"></div>
+      </div>
+    </div>
+    <div class="dash-utility-row">
+      <button id="dashCustomersBtn" class="dash-card">
+        <span class="dash-label">Customers</span>
+        <span class="dash-sub">Manage saved customers</span>
+      </button>
+      <button id="dashSettingsBtn" class="dash-card">
+        <span class="dash-label">Business Info</span>
+        <span class="dash-sub">Edit your business details</span>
+      </button>
+      <button id="dashAccountBtn" class="dash-card">
+        <span class="dash-label">Account</span>
+        <span class="dash-sub">View account & plan</span>
+      </button>
+    </div>
+    <div style="margin-top:18px;text-align:right;font-size:13px;color:#9ca3af;">
+      <span id="dashAccountSync">Last synced: never</span>
+      <span id="dashPlanBadge" style="margin-left:18px;"></span>
+      <span id="dashPlanMsg" style="margin-left:8px;"></span>
+      <button id="upgradeBtn" class="upgrade-btn" style="display:none;margin-left:18px;">Upgrade</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── APP CONTAINER (FORM) ── -->
+<div id="appContainer" style="display:none;"></div>
+
 <script src="calculator.js?v=20260419r"></script>
 <script src="dom.js?v=20260419r"></script>
 <script src="storage.js?v=20260419r"></script>
