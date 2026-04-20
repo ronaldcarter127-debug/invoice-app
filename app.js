@@ -1174,12 +1174,14 @@ async function syncAccountStateSilently(force) {
     setAuthSession(token, result.user || null);
     markAccountSynced();
     updateDashboardAccountSync();
-    checkPremium();
-    updateDashboard();
 
     if (typeof syncAccountDocuments === "function") {
       await syncAccountDocuments();
     }
+
+    checkPremium();
+    updateDashboard();
+    showDashboard();
 
     const accountView = document.getElementById("accountView");
     if (accountView && accountView.style.display !== "none") {
