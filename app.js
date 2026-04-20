@@ -5,8 +5,133 @@ const App = {
   activeInvoiceNumber: "",
   activeQuoteNumber: "", // ✅ track current quote
   user: null,
-  authReady: false
+  authReady: false,
+  currentStep: 2,
+  formMode: "invoice" // invoice or quote
 };
+
+// ─── Form Step Navigation ──────────────────────────────────────────────────
+function showFormStep(step) {
+  document.querySelectorAll(".form-step").forEach(function(el) {
+    el.style.display = el.getAttribute("data-step") == step ? "block" : "none";
+  });
+  
+  // Update indicator
+  document.querySelectorAll(".form-step-dot").forEach(function(dot) {
+    const dotStep = parseInt(dot.getAttribute("data-step"));
+    dot.classList.remove("active", "completed");
+    if (dotStep === step) {
+      dot.classList.add("active");
+    } else if (dotStep < step) {
+      dot.classList.add("completed");
+    }
+  });
+  
+  // Update step lines
+  document.querySelectorAll(".form-step-line").forEach(function(line, idx) {
+    line.classList.remove("active");
+    if (idx < step - 2) line.classList.add("active");
+  });
+  
+  App.currentStep = step;
+}
+
+function nextFormStep(fromStep) {
+  if (fromStep === 2) {
+    // Validate client name
+    const name = (document.getElementById("customer") || {}).value;
+    if (!name || !String(name).trim()) {
+      alert("Please enter a client name");
+      return;
+    }
+    showFormStep(3);
+  } else if (fromStep === 3) {
+    // Validate job breakdown
+    const labor = Number((document.getElementById("laborAmount") || {}).value || 0);
+    const materials = Number((document.getElementById("materialsAmount") || {}).value || 0);
+    if (labor <= 0 && materials <= 0) {
+      alert("Add at least Labor or Materials amount");
+      return;
+    }
+    showFormStep(4);
+    updateReviewScreen();
+  } else if (fromStep === 4) {
+    // Create invoice
+    createSteppedInvoice();
+  }
+}
+
+function prevFormStep(fromStep) {
+  if (fromStep >= 3) showFormStep(fromStep - 1);
+}
+
+function updateReviewScreen() {
+  const clientName = (document.getElementById("customer") || {}).value || "";
+  const clientEmail = (document.getElementById("customerEmail") || {}).value || "";
+  const labor = Number((document.getElementById("laborAmount") || {}).value || 0);
+  const materials = Number((document.getElementById("materialsAmount") || {}).value || 0);
+  const total = labor + materials;
+  
+  (document.getElementById("reviewClient") || {}).textContent = clientName;
+  (document.getElementById("reviewEmail") || {}).textContent = clientEmail || "(not provided)";
+  (document.getElementById("reviewLabor") || {}).textContent = "$" + labor.toFixed(2);
+  (document.getElementById("reviewMaterials") || {}).textContent = "$" + materials.toFixed(2);
+  (document.getElementById("reviewTotal") || {}).textContent = "$" + total.toFixed(2);
+}
+
+function createSteppedInvoice() {
+  // Build items array from labor + materials for createDoc() to use
+  const items = [];
+  const labor = Number((document.getElementById("laborAmount") || {}).value || 0);
+  const materials = Number((document.getElementById("materialsAmount") || {}).value || 0);
+  
+  if (labor > 0) {
+    items.push({ description: "Labor", qty: 1, price: labor });
+  }
+  if (materials > 0) {
+    items.push({ description: "Materials", qty: 1, price: materials });
+  }
+  
+  App.items = items;
+  createDoc();
+}
+
+function showDoneScreen(invoiceNumber, stripeUrl) {
+  showFormStep(5);
+  
+  // Update payment link container
+  const container = document.getElementById("paymentLinkContainer");
+  if (container) {
+    if (stripeUrl) {
+      container.innerHTML = '<p style="font-size:13px;color:#9ca3af;">Payment link has been created and your client can pay online.</p>';
+    } else {
+      container.innerHTML = "";
+    }
+  }
+  
+  // Store for later use
+  App.lastInvoiceNumber = invoiceNumber;
+  App.lastStripeUrl = stripeUrl;
+}
+
+function openPaymentLink() {
+  if (App.lastStripeUrl) {
+    window.open(App.lastStripeUrl, "_blank");
+  } else {
+    alert("No payment link available");
+  }
+}
+
+function createAnother() {
+  // Reset form and go back to step 2
+  document.getElementById("customer").value = "";
+  document.getElementById("customerEmail").value = "";
+  document.getElementById("laborAmount").value = "";
+  document.getElementById("materialsAmount").value = "";
+  document.getElementById("notes").value = "";
+  App.items = [];
+  showFormStep(2);
+}
 
 function resolvePremiumFromUser(user) {
   const u = user || {};
@@ -519,21 +644,17 @@ function openForm(mode) {
   const accountView = document.getElementById("accountView");
   if (accountView) accountView.style.display = "none";
   App._dashMode = mode;
+  App.formMode = mode;
 
-  const createInvoiceBtn = document.getElementById("createInvoiceBtn");
-  const createQuoteBtn = document.getElementById("createQuoteBtn");
-  const sendQuoteConvertBtn = document.getElementById("sendQuoteConvertBtn");
-
+  // Initialize stepped form for invoice mode
   if (mode === "invoice") {
-    if (createInvoiceBtn) createInvoiceBtn.style.display = "";
-    if (createQuoteBtn) createQuoteBtn.style.display = "none";
-    if (sendQuoteConvertBtn) sendQuoteConvertBtn.style.display = "none";
+    showFormStep(2);
   } else if (mode === "quote") {
-    if (createInvoiceBtn) createInvoiceBtn.style.display = "none";
-    if (createQuoteBtn) createQuoteBtn.style.display = "";
-    if (sendQuoteConvertBtn) sendQuoteConvertBtn.style.display = "";
+    // For now, quotes still use the old form - this could be extended
+    showFormStep(2);
   }
 }
+
 
 function openInvoiceHistory() {
   document.getElementById("dashboard").style.display = "none";

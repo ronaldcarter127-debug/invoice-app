@@ -419,6 +419,11 @@ function createQuote() {
 }
 
 function createDoc() {
+  // Check if using stepped form (has labor/materials inputs) or traditional form (has App.items already set from stepped form)
+  const laborAmount = Number((document.getElementById("laborAmount") || {}).value || 0);
+  const materialsAmount = Number((document.getElementById("materialsAmount") || {}).value || 0);
+  const isSteppedForm = laborAmount > 0 || materialsAmount > 0 || (App.items && App.items.length > 0);
+  
   const data = getDocumentData();
   data.email = String((document.getElementById("customerEmail") || {}).value || data.email || "").trim();
   if (data.total <= 0) { alert("Add at least one item before creating invoice"); return; }
@@ -431,9 +436,17 @@ function createDoc() {
   refreshInvoiceComputedFields(data);
   const saveResult = saveInvoice(data) || { saved: true };
   syncInvoiceToServer(data).catch(function () {});
-  renderDocument("Invoice", data, false);
-  resetEntryFieldsAfterCreate();
-  showOutputView();
+  
+  // Show done screen for stepped form, output view for traditional form
+  if (isSteppedForm && typeof showDoneScreen === "function") {
+    // Get business Stripe URL for payment link
+    const stripeUrl = localStorage.getItem("businessStripeUrl") || "";
+    showDoneScreen(data.invoiceNumber, stripeUrl);
+  } else {
+    renderDocument("Invoice", data, false);
+    showOutputView();
+  }
+  
   if (!saveResult.saved && saveResult.reason === "free-limit") {
     alert("Free plan stores up to " + saveResult.limit + " invoices in history. Upgrade to save more.");
   }

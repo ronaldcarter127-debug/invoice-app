@@ -10,7 +10,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>JobFlow Pro</title>
-<link rel="manifest" href="manifest.json?v=20260419m">
+<link rel="manifest" href="manifest.json?v=20260419n">
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Allura&family=Alex+Brush&display=swap" rel="stylesheet">
 
 <style>
@@ -26,9 +26,136 @@ button {padding:10px;margin-top:8px;border:none;border-radius:8px;font-weight:60
 .utility {background:#374151;color:white;font-size:14px;}
 .danger {background:#dc2626;color:white;font-size:12px;}
 .upgrade-btn {background:#f59e0b;color:black;margin-bottom:15px;}
+
+/* ── Stepped Form ── */
+.form-steps-indicator {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin-bottom:24px;
+}
+.form-step-dot {
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:#1f2937;
+  border:2px solid #374151;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#6b7280;
+  font-weight:bold;
+  font-size:14px;
+  transition:all 0.3s;
+}
+.form-step-dot.active {
+  background:#00ee58;
+  border-color:#00ee58;
+  color:#000;
+}
+.form-step-dot.completed {
+  background:#10b981;
+  border-color:#10b981;
+  color:#fff;
+}
+.form-step-line {
+  width:24px;
+  height:2px;
+  background:#374151;
+  transition:background 0.3s;
+}
+.form-step-line.active {
+  background:#00ee58;
+}
+
+.form-step {
+  padding:0;
+}
+.form-step h3 {
+  font-size:24px;
+  margin:0 0 20px 0;
+  color:#f8fafc;
+  font-weight:700;
+}
+.form-step input,
+.form-step textarea {
+  width:100%;
+  padding:12px;
+  margin-bottom:12px;
+  border:1px solid #374151;
+  border-radius:8px;
+  background:#1f2937;
+  color:white;
+  font-size:16px;
+  font-family:inherit;
+}
+.form-step input::placeholder,
+.form-step textarea::placeholder {
+  color:#6b7280;
+}
+.form-step input:focus,
+.form-step textarea:focus {
+  outline:none;
+  border-color:#00ee58;
+  box-shadow:0 0 0 2px rgba(0, 238, 88, 0.1);
+}
+.form-step textarea {
+  resize:vertical;
+  min-height:80px;
+}
+
+.job-breakdown {
+  margin-bottom:16px;
+}
+.job-breakdown label {
+  display:block;
+  color:#d1d5db;
+  font-size:14px;
+  font-weight:600;
+  margin-bottom:6px;
+}
+
+.review-summary {
+  background:#1f2937;
+  padding:16px;
+  border-radius:10px;
+  border:1px solid #374151;
+  margin-bottom:16px;
+}
+.review-item {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px 0;
+  font-size:15px;
+  color:#d1d5db;
+}
+.review-item span:first-child {
+  color:#9ca3af;
+}
+.review-item strong {
+  color:#f8fafc;
+  font-weight:600;
+}
+.review-total {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:16px 0;
+  border-top:1px solid #374151;
+  margin-top:8px;
+  font-size:18px;
+  font-weight:700;
+}
+.review-total span:first-child {
+  color:#d1d5db;
+}
+
 .mode-banner {margin:8px 0 14px 0;padding:10px 12px;border-radius:10px;border:1px solid #334155;background:#0f172a;}
 .mode-banner strong {display:block;font-size:13px;letter-spacing:0.4px;text-transform:uppercase;}
 .mode-banner span {display:block;font-size:12px;color:#cbd5e1;margin-top:3px;}
+
 .premium-only.locked {opacity:0.55;cursor:not-allowed;filter:grayscale(0.2);}
 body.free-mode .card {border:1px solid #1d4ed8;box-shadow:0 8px 18px rgba(29,78,216,0.25);}
 body.free-mode .mode-banner {border-color:#1e3a8a;background:linear-gradient(135deg,#0f172a,#172554);}
@@ -88,10 +215,21 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
   .section {padding:12px;margin-bottom:12px;}
   .section h3 {font-size:16px;}
 
+  /* Stepped form mobile */
+  .form-steps-indicator {margin-bottom:20px;}
+  .form-step-dot {width:36px;height:36px;font-size:13px;}
+  .form-step h3 {font-size:20px;margin-bottom:16px;}
+  .form-step input, .form-step textarea {padding:14px;font-size:16px;margin-bottom:10px;}
+  .review-summary {padding:12px;margin-bottom:14px;}
+  .review-item {padding:6px 0;font-size:14px;}
+  .review-total {font-size:16px;padding:12px 0;}
+  .review-total span:last-child {font-size:28px;}
+
   /* Inputs & buttons full-width */
   input, textarea, select {font-size:16px;padding:10px;margin-top:6px;width:100%;box-sizing:border-box;}
   button {font-size:15px;padding:12px;margin-top:6px;width:100%;box-sizing:border-box;cursor:pointer;}
   .primary {font-size:17px;padding:14px;}
+
 
   /* Business info stack vertically */
   div[style*="display:flex;gap:15px"] {flex-direction:column !important;gap:10px !important;}
@@ -348,92 +486,110 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
   <button id="upgradeBtn" class="upgrade-btn" style="width:100%;margin-top:14px;" onclick="upgrade()">Upgrade to Premium</button>
 </div>
 
-<!-- ── FORM ── -->
+<!-- ── STEPPED FORM ── -->
 <div class="card" id="appContainer" style="display:none;">
 <button class="dash-back" onclick="showDashboard()">&#8592; Dashboard</button>
-<h2>JobFlow Pro</h2>
-<div id="modeBanner" class="mode-banner">
-  <strong id="planBadge">Free Plan</strong>
-  <span id="planMessage">Create invoices and quotes. Upgrade to unlock history and premium export features.</span>
+
+<!-- Step Indicator -->
+<div class="form-steps-indicator">
+  <div class="form-step-dot" data-step="2"><span>2</span></div>
+  <div class="form-step-line"></div>
+  <div class="form-step-dot" data-step="3"><span>3</span></div>
+  <div class="form-step-line"></div>
+  <div class="form-step-dot" data-step="4"><span>4</span></div>
+  <div class="form-step-line"></div>
+  <div class="form-step-dot" data-step="5"><span>5</span></div>
 </div>
 
-<div class="section">
-<h3>Customer Info</h3>
-<input id="customerEmail" type="email" placeholder="Customer Email" />
-<select id="savedCustomers" onchange="loadSavedCustomer()">
-  <option value="">Select Saved Customer</option>
-</select>
-<button type="button" onclick="saveCurrentCustomer()">Save Customer</button>
-<div class="customer-info">
-  <input id="customer" type="text" placeholder="Customer Name" />
-  <input id="contact" type="text" placeholder="Phone" />
-  <input id="address" type="text" placeholder="Address" />
-</div>
+<!-- Step 2: Client Info -->
+<div class="form-step" id="formStep2" data-step="2">
+  <h3>Who's this for?</h3>
+  <input id="customer" type="text" placeholder="Client Name" />
+  <input id="customerEmail" type="email" placeholder="Email (optional but encouraged)" />
+  <button type="button" class="primary" onclick="nextFormStep(2)">Continue</button>
 </div>
 
-<div class="section">
-<h3>Job Details</h3>
-<textarea id="description" placeholder="Job Description"></textarea>
-</div>
-
-<div class="section">
-<h3>Line Items</h3>
-<div class="item-columns">
-  <div class="item-column">
-    <div class="column-header">Service</div>
+<!-- Step 3: Job Breakdown -->
+<div class="form-step" id="formStep3" data-step="3" style="display:none;">
+  <h3>Job Breakdown</h3>
+  <div class="job-breakdown">
+    <label>Labor</label>
+    <input id="laborAmount" type="number" placeholder="$0.00" step="0.01" min="0" />
+    <label style="margin-top:12px;">Materials</label>
+    <input id="materialsAmount" type="number" placeholder="$0.00" step="0.01" min="0" />
+    <label style="margin-top:12px;">Notes (optional)</label>
+    <textarea id="notes" placeholder="Add any notes or terms..."></textarea>
   </div>
-  <div class="item-column">
-    <div class="column-header">QTY</div>
-  </div>
-  <div class="item-column">
-    <div class="column-header">Price</div>
+  <div style="display:flex;gap:10px;margin-top:16px;">
+    <button type="button" class="secondary" style="flex:1;" onclick="prevFormStep(3)">Back</button>
+    <button type="button" class="primary" style="flex:1;" onclick="nextFormStep(3)">Continue</button>
   </div>
 </div>
-<div id="items"></div>
-<button id="addItemBtn" type="button" onclick="addItem()">+ Add Item</button>
+
+<!-- Step 4: Review -->
+<div class="form-step" id="formStep4" data-step="4" style="display:none;">
+  <h3>Review Your Invoice</h3>
+  <div class="review-summary">
+    <div class="review-item">
+      <span>Client:</span>
+      <strong id="reviewClient"></strong>
+    </div>
+    <div class="review-item">
+      <span>Email:</span>
+      <strong id="reviewEmail"></strong>
+    </div>
+    <div style="margin:14px 0;border-top:1px solid #374151;padding-top:14px;">
+      <div class="review-item">
+        <span>Labor:</span>
+        <span id="reviewLabor">$0.00</span>
+      </div>
+      <div class="review-item">
+        <span>Materials:</span>
+        <span id="reviewMaterials">$0.00</span>
+      </div>
+    </div>
+    <div class="review-total">
+      <span>Total</span>
+      <span id="reviewTotal" style="font-size:32px;font-weight:900;color:#34d399;">$0.00</span>
+    </div>
+    <div class="review-item" style="margin-top:14px;">
+      <span>Due:</span>
+      <strong>Due Now</strong>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:16px;">
+    <button type="button" class="secondary" style="flex:1;" onclick="prevFormStep(4)">Back</button>
+    <button id="sendAndGetPaidBtn" type="button" class="primary" style="flex:1;" onclick="nextFormStep(4)">Send & Get Paid</button>
+  </div>
 </div>
 
-<div class="section">
-<h3>Totals</h3>
-<input id="tax" placeholder="Tax % (optional)">
-<input id="amountPaid" placeholder="Payments Received (optional)" type="number" step="0.01">
-<select id="paymentMethod">
+<!-- Step 5: Done Screen -->
+<div class="form-step" id="formStep5" data-step="5" style="display:none;">
+  <div style="text-align:center;padding:20px 0;">
+    <div style="font-size:48px;margin-bottom:10px;">✅</div>
+    <h3 style="font-size:24px;margin-bottom:8px;">Invoice Sent!</h3>
+    <p style="color:#9ca3af;font-size:14px;margin-bottom:20px;">Your invoice has been created and is ready to send.</p>
+    <div id="paymentLinkContainer" style="margin-bottom:20px;"></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    <button id="openPaymentLinkBtn" type="button" class="primary" style="width:100%;" onclick="openPaymentLink()">Open Payment Link</button>
+    <button type="button" class="secondary" style="width:100%;" onclick="createAnother()">Send Another</button>
+  </div>
+</div>
+
+<!-- Hidden inputs for form data (for compatibility with existing code) -->
+<input id="contact" type="hidden" />
+<input id="address" type="hidden" />
+<input id="description" type="hidden" />
+<input id="tax" type="hidden" />
+<input id="amountPaid" type="hidden" />
+<select id="paymentMethod" style="display:none;">
   <option value="">Payment Method</option>
-  <option value="Cash">Cash</option>
-  <option value="Card">Card</option>
-  <option value="Venmo">Venmo</option>
-  <option value="Check">Check</option>
-  <option value="Bank Transfer">Bank Transfer</option>
 </select>
-<input id="dueDate" placeholder="Due Date (optional)">
-<textarea id="notes" placeholder="Notes / Terms (optional)"></textarea>
-<div class="totals" id="liveTotals">
-<div>Subtotal: $0.00</div>
-<div>Payments Received: $0.00</div>
-<div>Tax: $0.00</div>
-<div class="total">TOTAL: $0.00</div>
-<div>Balance Due: $0.00</div>
-</div>
-</div>
+<input id="dueDate" type="hidden" />
+<div id="items" style="display:none;"></div>
+<select id="savedCustomers" style="display:none;"></select>
 
-<div class="section">
-<h3>Actions</h3>
-<button id="createInvoiceBtn" type="button" class="primary" onclick="createDoc()">Create Invoice</button>
-<button id="createQuoteBtn" type="button" class="secondary" onclick="createQuote()">Create Quote</button>
-<button id="previewInvoiceBtn" type="button" class="utility" onclick="previewInvoice()">Preview Invoice</button>
-</div>
-
-<div class="actions">
-  <button id="sendEmailBtn" type="button" onclick="sendEmail()">Send Email</button>
-  <button id="sendQuoteConvertBtn" type="button" onclick="sendQuoteThenConvert()">Send Quote + Convert</button>
-  <button type="button" onclick="saveCurrentAsTemplate()">Save Template</button>
-  <select id="templateSelect">
-    <option value="">Select Template</option>
-  </select>
-  <button type="button" onclick="applySelectedTemplate()">Apply Template</button>
-</div>
-
-<button type="button" onclick="resetApp()" class="danger">Reset App</button>
 </div>
 
 <div id="historyView" style="display:none;">
@@ -520,13 +676,13 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
   </div>
 </div>
 
-<script src="calculator.js?v=20260419m"></script>
-<script src="dom.js?v=20260419m"></script>
-<script src="storage.js?v=20260419m"></script>
-<script src="ui.js?v=20260419m"></script>
-<script src="business.js?v=20260419m"></script>
-<script src="documents.js?v=20260419m"></script>
-<script src="app.js?v=20260419m"></script>
+<script src="calculator.js?v=20260419n"></script>
+<script src="dom.js?v=20260419n"></script>
+<script src="storage.js?v=20260419n"></script>
+<script src="ui.js?v=20260419n"></script>
+<script src="business.js?v=20260419n"></script>
+<script src="documents.js?v=20260419n"></script>
+<script src="app.js?v=20260419n"></script>
 
 </body>
 </html>
