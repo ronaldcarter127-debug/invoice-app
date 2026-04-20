@@ -180,6 +180,20 @@ async function syncAccountDocuments() {
   const token = (typeof getAuthToken === "function") ? String(getAuthToken() || "").trim() : "";
   if (!token) return;
 
+  const localInvoices = getStoredInvoices().map(normalizeInvoiceForStorage);
+  const localQuotes = getStoredQuotes();
+
+  // First, try to upsert local docs so whichever device has the latest entries
+  // can seed the account dataset for other devices.
+  await Promise.all([
+    Promise.all(localInvoices.map(function (inv) {
+      return syncInvoiceToServer(inv).catch(function () {});
+    })),
+    Promise.all(localQuotes.map(function (q) {
+      return syncQuoteToServer(q).catch(function () {});
+    }))
+  ]);
+
   const results = await Promise.all([
     fetchJsonWithTimeout(`${API_BASE_URL}/invoices`, 8000),
     fetchJsonWithTimeout(`${API_BASE_URL}/quotes`, 8000)
@@ -188,8 +202,8 @@ async function syncAccountDocuments() {
   const remoteInvoices = Array.isArray(results[0]) ? results[0].map(normalizeInvoiceForStorage) : null;
   const remoteQuotes = Array.isArray(results[1]) ? results[1] : null;
 
-  const localInvoices = getStoredInvoices();
-  const localQuotes = getStoredQuotes();
+  const freshLocalInvoices = getStoredInvoices();
+  const freshLocalQuotes = getStoredQuotes();
 
   if (remoteInvoices) {
     const remoteInvoiceMap = {};
@@ -198,7 +212,7 @@ async function syncAccountDocuments() {
       if (key) remoteInvoiceMap[key] = inv;
     });
 
-    const improvedLocalInvoices = localInvoices.filter(function (inv) {
+    const improvedLocalInvoices = freshLocalInvoices.filter(function (inv) {
       const key = normalizeDocNumber(inv && inv.invoiceNumber);
       if (!key) return false;
       const remote = remoteInvoiceMap[key];
@@ -211,41 +225,11 @@ async function syncAccountDocuments() {
       }));
     }
 
-    const remoteInvoiceKeys = new Set(remoteInvoices.map(function (inv) {
-      return normalizeDocNumber(inv && inv.invoiceNumber);
-    }).filter(Boolean));
-
-    const missingLocalInvoices = localInvoices.filter(function (inv) {
-      const key = normalizeDocNumber(inv && inv.invoiceNumber);
-      return key && !remoteInvoiceKeys.has(key);
-    });
-
-    if (missingLocalInvoices.length) {
-      await Promise.all(missingLocalInvoices.map(function (inv) {
-        return syncInvoiceToServer(inv).catch(function () {});
-      }));
-    }
-
-    const mergedInvoices = mergeByKey(localInvoices, remoteInvoices, "invoiceNumber");
+    const mergedInvoices = mergeByKey(freshLocalInvoices, remoteInvoices, "invoiceNumber");
     writeJson("invoiceHistory", mergedInvoices);
   }
   if (remoteQuotes) {
-    const remoteQuoteKeys = new Set(remoteQuotes.map(function (q) {
-      return normalizeDocNumber(q && q.quoteNumber);
-    }).filter(Boolean));
-
-    const missingLocalQuotes = localQuotes.filter(function (q) {
-      const key = normalizeDocNumber(q && q.quoteNumber);
-      return key && !remoteQuoteKeys.has(key);
-    });
-
-    if (missingLocalQuotes.length) {
-      await Promise.all(missingLocalQuotes.map(function (q) {
-        return syncQuoteToServer(q).catch(function () {});
-      }));
-    }
-
-    const mergedQuotes = mergeByKey(localQuotes, remoteQuotes, "quoteNumber");
+    const mergedQuotes = mergeByKey(freshLocalQuotes, remoteQuotes, "quoteNumber");
     writeJson("quoteHistory", mergedQuotes);
   }
 }
@@ -278,7 +262,9 @@ function createQuote() {
   clearAcceptedQuoteBanner();
   setInvoiceEditingLocked(false, "");
   saveQuote(data);
-  syncQuoteToServer(data).catch(function () {});
+  syncQuoteToServer(data)
+    .then(function () { return syncAccountDocuments(); })
+    .catch(function () {});
   renderDocument("Quote", data, true);
   resetEntryFieldsAfterCreate();
   showOutputView();
