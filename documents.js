@@ -149,6 +149,32 @@ function mergeByKey(localRows, remoteRows, keyField) {
   return merged;
 }
 
+function makeClientQuoteNumber() {
+  const stamp = Date.now();
+  const rand = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+  return "Q-" + stamp + "-" + rand;
+}
+
+function normalizeLocalQuotesForSync(quotes) {
+  const list = Array.isArray(quotes) ? quotes.slice() : [];
+  const seen = new Set();
+
+  return list.map(function (quote) {
+    const row = Object.assign({}, quote || {});
+    let qn = normalizeDocNumber(row.quoteNumber);
+
+    if (!qn || seen.has(qn)) {
+      do {
+        qn = makeClientQuoteNumber();
+      } while (seen.has(qn));
+      row.quoteNumber = qn;
+    }
+
+    seen.add(qn);
+    return row;
+  });
+}
+
 function normalizeInvoiceForStorage(invoice) {
   const row = Object.assign({}, invoice || {});
   const paid = String(row.status || "").toLowerCase() === "paid";
@@ -181,7 +207,9 @@ async function syncAccountDocuments() {
   if (!token) return;
 
   const localInvoices = getStoredInvoices().map(normalizeInvoiceForStorage);
-  const localQuotes = getStoredQuotes();
+  const localQuotes = normalizeLocalQuotesForSync(getStoredQuotes());
+
+  writeJson("quoteHistory", localQuotes);
 
   // First, try to upsert local docs so whichever device has the latest entries
   // can seed the account dataset for other devices.
@@ -203,7 +231,8 @@ async function syncAccountDocuments() {
   const remoteQuotes = Array.isArray(results[1]) ? results[1] : null;
 
   const freshLocalInvoices = getStoredInvoices();
-  const freshLocalQuotes = getStoredQuotes();
+  const freshLocalQuotes = normalizeLocalQuotesForSync(getStoredQuotes());
+  writeJson("quoteHistory", freshLocalQuotes);
 
   if (remoteInvoices) {
     const remoteInvoiceMap = {};
@@ -253,7 +282,7 @@ function createQuote() {
   data.amountPaid = Number(data.amountPaid) || 0;
   data.balanceDue = Math.max(0, data.finalTotal - data.amountPaid);
 
-  data.quoteNumber = getNextQuoteNumber();
+  data.quoteNumber = normalizeDocNumber(getNextQuoteNumber());
   data.date = new Date().toLocaleString();
   data.status = "Pending";
   App.activeQuoteNumber = String(data.quoteNumber || "").trim();

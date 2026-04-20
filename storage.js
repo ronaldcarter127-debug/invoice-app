@@ -39,7 +39,9 @@ function saveQuote(data) {
 }
 
 function getNextQuoteNumber() {
-  return Date.now();
+  const stamp = Date.now();
+  const rand = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+  return "Q-" + stamp + "-" + rand;
 }
 
 function getSavedInvoices() {
