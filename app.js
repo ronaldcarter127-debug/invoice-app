@@ -412,8 +412,19 @@ function runAppInitOnce() {
     });
   }
 
-  showDashboard();
-  // Removed auto-sync on every load for speed
+  // If no local invoices or quotes, sync once in background, then show dashboard
+  const hasLocalInvoices = typeof getStoredInvoices === "function" && getStoredInvoices().length > 0;
+  const hasLocalQuotes = typeof getStoredQuotes === "function" && getStoredQuotes().length > 0;
+  if (!hasLocalInvoices && !hasLocalQuotes && typeof syncAccountDocuments === "function") {
+    // Show dashboard immediately (empty), then sync and reload dashboard
+    showDashboard();
+    syncAccountDocuments().then(() => {
+      // After sync, reload dashboard to show new data
+      setTimeout(showDashboard, 100);
+    }).catch(() => {});
+  } else {
+    showDashboard();
+  }
 }
 
 function setInvoiceEditingLocked(locked, invoiceNumber) {
