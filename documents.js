@@ -655,22 +655,38 @@ function restoreQuoteForm(data) {
 }
 
 function restoreInvoiceForm(data) {
-  document.getElementById("customer").value = data.customer || "";
-  document.getElementById("contact").value = data.contact || "";
-  const emailEl = document.getElementById("customerEmail");
-  if (emailEl) emailEl.value = data.email || data.to || "";
-  document.getElementById("address").value = data.address || "";
-  document.getElementById("description").value = data.description || "";
-  document.getElementById("tax").value = data.taxPercent || "";
-  document.getElementById("amountPaid").value = data.amountPaid || "";
-  document.getElementById("paymentMethod").value = data.paymentMethod || "";
-  document.getElementById("dueDate").value = data.dueDate || "";
-  document.getElementById("notes").value = data.notes || "";
-  document.getElementById("items").innerHTML = "";
-  App.items = [];
-  if (data.items && data.items.length) data.items.forEach(function (item) { addItem(item); });
-  else addItem();
-  updateLiveTotals();
+  // Safely restore form fields, handling both stepped and traditional form structures
+  const safeSetValue = function(id, value) {
+    const el = document.getElementById(id);
+    if (el && el.type !== "hidden") el.value = value || "";
+  };
+  
+  safeSetValue("customer", data.customer || "");
+  safeSetValue("contact", data.contact || "");
+  safeSetValue("customerEmail", data.email || data.to || "");
+  safeSetValue("address", data.address || "");
+  safeSetValue("description", data.description || "");
+  safeSetValue("tax", data.taxPercent || "");
+  safeSetValue("amountPaid", data.amountPaid || "");
+  safeSetValue("paymentMethod", data.paymentMethod || "");
+  safeSetValue("dueDate", data.dueDate || "");
+  safeSetValue("notes", data.notes || "");
+  
+  // Only restore items if using traditional form (not stepped form)
+  const itemsContainer = document.getElementById("items");
+  if (itemsContainer && itemsContainer.style.display !== "none") {
+    itemsContainer.innerHTML = "";
+    App.items = [];
+    if (data.items && data.items.length) {
+      data.items.forEach(function (item) { 
+        if (typeof addItem === "function") addItem(item); 
+      });
+    } else {
+      if (typeof addItem === "function") addItem();
+    }
+  }
+  
+  if (typeof updateLiveTotals === "function") updateLiveTotals();
 }
 
 function loadQuote(quoteNumber) {
@@ -688,6 +704,7 @@ function loadQuote(quoteNumber) {
   setQuoteReadOnly(isAccepted);
   if (isAccepted) { renderAcceptedQuoteBanner(quote); alert("This quote has already been accepted."); }
   else clearAcceptedQuoteBanner();
+  if (typeof showOutputView === "function") showOutputView();
 }
 
 function deleteQuote(quoteNumber) {
@@ -730,6 +747,7 @@ async function loadInvoice(invoiceNumber) {
   restoreInvoiceForm(invoice);
   setInvoiceEditingLocked(true, invoice.invoiceNumber);
   renderDocument("Invoice", invoice, false);
+  if (typeof showOutputView === "function") showOutputView();
 }
 
 function deleteInvoice(invoiceNumber) {
