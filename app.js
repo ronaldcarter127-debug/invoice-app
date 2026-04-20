@@ -1200,7 +1200,7 @@ async function syncAccountStateSilently(force) {
 window.onload = async function() {
   const authed = await ensureAuthenticated();
   if (!authed) return;
-  await syncAccountStateSilently(false);
+  await syncAccountStateSilently(true); // Always force sync on load
   runAppInitOnce();
 };
 
