@@ -1195,8 +1195,8 @@ async function syncAccountStateSilently(force) {
 window.onload = async function() {
   const authed = await ensureAuthenticated();
   if (!authed) return;
+  await syncAccountStateSilently(false);
   runAppInitOnce();
-  syncAccountStateSilently(false);
 };
 
 document.addEventListener("visibilitychange", function () {
