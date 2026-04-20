@@ -175,6 +175,66 @@ function normalizeLocalQuotesForSync(quotes) {
   });
 }
 
+function getQuoteSemanticKey(quote) {
+  const q = quote || {};
+  const items = Array.isArray(q.items) ? q.items : [];
+  const itemKey = items.map(function (it) {
+    const name = String(it && it.name || "").trim().toLowerCase();
+    const qty = Number(it && it.qty || 0) || 0;
+    const price = Number(it && it.price || 0) || 0;
+    return name + "|" + qty + "|" + price;
+  }).join(";");
+
+  return [
+    String(q.customer || "").trim().toLowerCase(),
+    String(q.date || "").trim(),
+    Number(q.total || 0).toFixed(2),
+    Number(q.taxAmount || 0).toFixed(2),
+    Number(q.finalTotal || 0).toFixed(2),
+    Number(q.amountPaid || 0).toFixed(2),
+    Number(q.balanceDue || 0).toFixed(2),
+    String(q.notes || "").trim().toLowerCase(),
+    itemKey
+  ].join("||");
+}
+
+function choosePreferredQuote(a, b) {
+  if (!a) return b;
+  if (!b) return a;
+
+  const aAccepted = String(a.status || "").toLowerCase() === "accepted";
+  const bAccepted = String(b.status || "").toLowerCase() === "accepted";
+  if (aAccepted !== bAccepted) return bAccepted ? b : a;
+
+  const aAcceptedAt = new Date(a.acceptedAt || 0).getTime() || 0;
+  const bAcceptedAt = new Date(b.acceptedAt || 0).getTime() || 0;
+  if (aAcceptedAt !== bAcceptedAt) return bAcceptedAt > aAcceptedAt ? b : a;
+
+  const aNum = normalizeDocNumber(a.quoteNumber);
+  const bNum = normalizeDocNumber(b.quoteNumber);
+  return bNum > aNum ? b : a;
+}
+
+function dedupeQuotesByContent(quotes) {
+  const byQuoteNumber = {};
+  (Array.isArray(quotes) ? quotes : []).forEach(function (q) {
+    const key = normalizeDocNumber(q && q.quoteNumber);
+    if (!key) return;
+    byQuoteNumber[key] = choosePreferredQuote(byQuoteNumber[key], q);
+  });
+
+  const bySemantic = {};
+  Object.keys(byQuoteNumber).forEach(function (qn) {
+    const row = byQuoteNumber[qn];
+    const sKey = getQuoteSemanticKey(row);
+    bySemantic[sKey] = choosePreferredQuote(bySemantic[sKey], row);
+  });
+
+  return Object.keys(bySemantic).map(function (k) {
+    return bySemantic[k];
+  });
+}
+
 function normalizeInvoiceForStorage(invoice) {
   const row = Object.assign({}, invoice || {});
   const paid = String(row.status || "").toLowerCase() === "paid";
@@ -207,7 +267,7 @@ async function syncAccountDocuments() {
   if (!token) return;
 
   const localInvoices = getStoredInvoices().map(normalizeInvoiceForStorage);
-  const localQuotes = normalizeLocalQuotesForSync(getStoredQuotes());
+  const localQuotes = dedupeQuotesByContent(normalizeLocalQuotesForSync(getStoredQuotes()));
 
   writeJson("quoteHistory", localQuotes);
 
@@ -231,7 +291,7 @@ async function syncAccountDocuments() {
   const remoteQuotes = Array.isArray(results[1]) ? results[1] : null;
 
   const freshLocalInvoices = getStoredInvoices();
-  const freshLocalQuotes = normalizeLocalQuotesForSync(getStoredQuotes());
+  const freshLocalQuotes = dedupeQuotesByContent(normalizeLocalQuotesForSync(getStoredQuotes()));
   writeJson("quoteHistory", freshLocalQuotes);
 
   if (remoteInvoices) {
@@ -258,7 +318,7 @@ async function syncAccountDocuments() {
     writeJson("invoiceHistory", mergedInvoices);
   }
   if (remoteQuotes) {
-    const mergedQuotes = mergeByKey(freshLocalQuotes, remoteQuotes, "quoteNumber");
+    const mergedQuotes = dedupeQuotesByContent(mergeByKey(freshLocalQuotes, remoteQuotes, "quoteNumber"));
     writeJson("quoteHistory", mergedQuotes);
   }
 }
@@ -416,7 +476,8 @@ async function showQuoteHistory(filter) {
   await syncAccountDocuments();
   await refreshAllQuoteStatuses();
   const normalizedFilter = String(filter || "all").toLowerCase();
-  const quotes = getStoredQuotes();
+  const quotes = dedupeQuotesByContent(getStoredQuotes());
+  saveStoredQuotes(quotes);
   const filtered = normalizedFilter === "accepted"
     ? quotes.filter(function (q) { return String(q.status || "").toLowerCase() === "accepted"; })
     : quotes;
