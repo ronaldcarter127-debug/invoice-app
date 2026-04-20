@@ -681,8 +681,11 @@ async function refreshAccountDetails() {
     if (!token) throw new Error("No auth token found.");
     const result = await authRequest("/auth/me", null, token);
     App.user = result.user || null;
+    App.premium = resolvePremiumFromUser(App.user);
     markAccountSynced();
     updateDashboardAccountSync();
+    checkPremium();
+    updateDashboard();
     renderAccountDetails();
     const nextMsg = document.getElementById("accountRefreshMsg");
     if (nextMsg) nextMsg.textContent = "Account data updated.";
@@ -778,11 +781,55 @@ function bindPrimaryActionButtons() {
   if (dashQuoteHistoryBtn) dashQuoteHistoryBtn.onclick = function () { openQuoteHistoryDash(); };
 }
 
+let accountSyncInFlight = false;
+
+async function syncAccountStateSilently(force) {
+  if (accountSyncInFlight) return;
+  const token = getAuthToken();
+  if (!token) return;
+
+  const now = Date.now();
+  const lastSyncedRaw = localStorage.getItem("accountLastSyncedAt");
+  const lastSyncedMs = lastSyncedRaw ? new Date(lastSyncedRaw).getTime() : 0;
+  const recentlySynced = Number.isFinite(lastSyncedMs) && lastSyncedMs > 0 && (now - lastSyncedMs) < 60000;
+  if (!force && recentlySynced) return;
+
+  accountSyncInFlight = true;
+  try {
+    const result = await authRequest("/auth/me", null, token);
+    setAuthSession(token, result.user || null);
+    markAccountSynced();
+    updateDashboardAccountSync();
+    checkPremium();
+    updateDashboard();
+
+    const accountView = document.getElementById("accountView");
+    if (accountView && accountView.style.display !== "none") {
+      renderAccountDetails();
+    }
+  } catch (_) {
+    // Ignore silent sync errors to avoid interrupting normal app flow.
+  } finally {
+    accountSyncInFlight = false;
+  }
+}
+
 window.onload = async function() {
   const authed = await ensureAuthenticated();
   if (!authed) return;
   runAppInitOnce();
+  syncAccountStateSilently(false);
 };
+
+document.addEventListener("visibilitychange", function () {
+  if (!document.hidden) {
+    syncAccountStateSilently(false);
+  }
+});
+
+window.addEventListener("pageshow", function () {
+  syncAccountStateSilently(false);
+});
 
 (function () {
   const KEY = "savedCustomers";
