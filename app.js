@@ -762,20 +762,49 @@ window.updateDashboardAccountSync = updateDashboardAccountSync;
 function bindTap(el, handler) {
   if (!el || typeof handler !== "function") return;
 
-  const KEY = "__lastTapAt";
+  const TAP_KEY = "__lastTapAt";
+  const CLICK_GUARD_KEY = "__ignoreClickUntil";
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchMoved = false;
+  const MOVE_THRESHOLD = 14;
+
   const invoke = function (event) {
     const now = Date.now();
-    const last = Number(el[KEY] || 0);
+    const last = Number(el[TAP_KEY] || 0);
     if (now - last < 350) return;
-    el[KEY] = now;
-    try {
-      if (event && typeof event.preventDefault === "function") event.preventDefault();
-    } catch (_) {}
+    el[TAP_KEY] = now;
     handler(event);
   };
 
-  el.onclick = invoke;
-  el.addEventListener("touchend", invoke, { passive: false });
+  el.addEventListener("touchstart", function (event) {
+    const t = event && event.changedTouches && event.changedTouches[0];
+    touchStartX = t ? Number(t.clientX || 0) : 0;
+    touchStartY = t ? Number(t.clientY || 0) : 0;
+    touchMoved = false;
+  }, { passive: true });
+
+  el.addEventListener("touchmove", function (event) {
+    const t = event && event.changedTouches && event.changedTouches[0];
+    if (!t) return;
+    const dx = Math.abs(Number(t.clientX || 0) - touchStartX);
+    const dy = Math.abs(Number(t.clientY || 0) - touchStartY);
+    if (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD) {
+      touchMoved = true;
+    }
+  }, { passive: true });
+
+  el.addEventListener("touchend", function (event) {
+    if (touchMoved) return;
+    el[CLICK_GUARD_KEY] = Date.now() + 500;
+    invoke(event);
+  }, { passive: true });
+
+  el.onclick = function (event) {
+    const guard = Number(el[CLICK_GUARD_KEY] || 0);
+    if (Date.now() < guard) return;
+    invoke(event);
+  };
 }
 
 function bindPrimaryActionButtons() {
