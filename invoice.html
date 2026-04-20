@@ -134,9 +134,33 @@
 </div>
 
 
+
 <!-- ── APP CONTAINER (FORM) ── -->
 <div id="appContainer" style="display:none;">
-  <div style="color:#f87171;font-size:16px;">[App Container: No form loaded]</div>
+  <div class="card">
+    <div style="color:#f87171;font-size:16px;">[App Container: Invoice/Quote Form]</div>
+    <form id="mainForm" autocomplete="off">
+      <div class="section">
+        <input id="customer" placeholder="Client Name">
+        <input id="customerEmail" placeholder="Client Email">
+      </div>
+      <div class="section">
+        <input id="laborAmount" type="number" placeholder="Labor Amount">
+        <input id="materialsAmount" type="number" placeholder="Materials Amount">
+      </div>
+      <div class="section">
+        <div id="items"></div>
+        <button id="addItemBtn" type="button">Add Item</button>
+      </div>
+      <div class="section">
+        <input id="tax" type="number" placeholder="Tax %">
+        <input id="amountPaid" type="number" placeholder="Amount Paid">
+        <input id="paymentMethod" placeholder="Payment Method">
+        <input id="dueDate" placeholder="Due Date">
+        <textarea id="notes" placeholder="Notes"></textarea>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- ── HISTORY VIEW (INVISIBLE PLACEHOLDER) ── -->
