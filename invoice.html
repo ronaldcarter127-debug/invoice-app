@@ -2,15 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="JobFlow Pro">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <title>JobFlow Pro</title>
-<link rel="manifest" href="manifest.json?v=20260419b">
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Allura&family=Alex+Brush&display=swap" rel="stylesheet">
 
 <style>
@@ -20,7 +12,7 @@ body {font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:#0b
 .section h3 {margin-top:0;color:#00ee58;font-size:18px;}
 input, textarea {width:100%;padding:8px;margin-top:5px;border:1px solid #374151;border-radius:6px;background:#1f2937;color:white;}
 textarea {resize:vertical;min-height:60px;}
-button {padding:10px;margin-top:8px;border:none;border-radius:8px;font-weight:600;transition:background 0.2s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+button {padding:10px;margin-top:8px;border:none;border-radius:8px;font-weight:600;transition:background 0.2s;}
 .primary {background:#00ee58;color:black;font-size:16px;padding:12px;}
 .secondary {background:#6b7280;color:white;}
 .utility {background:#374151;color:white;font-size:14px;}
@@ -59,7 +51,6 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 .item-row input:first-child {flex:0 0 325px;}
 .item-row input[type="number"] {flex:0 0 80px;text-align:center;}
 .item-row input[type="number"]:last-child {flex:0 0 125px;}
-.invoice-table-wrap {width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .invoice-table {width:100%;border-collapse:collapse;margin:20px 0;}
 .invoice-table th, .invoice-table td {padding:10px;text-align:left;border-bottom:1px solid #e5e7eb;}
 .invoice-table th {background:#f8fafc;font-weight:bold;}
@@ -79,99 +70,27 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 .status-partial {background:#f59e0b;color:white;}
 .status-unpaid {background:#6b7280;color:white;}
 .status-overdue {background:#ef4444;color:white;}
-.status-locked {background:#111827;color:#e5e7eb;}
-.invoice-entry-locked {background:#eceff3;border-style:dashed;}
-.invoice-entry-locked .invoice-locked-content {filter:blur(5px) contrast(0.7) saturate(0.3) brightness(0.75);user-select:none;pointer-events:none;display:block;}
 @media (max-width: 768px) {
-  body {padding:10px;}
-  .card {padding:12px;margin:0 0 12px 0;border-radius:10px;}
-  .section {padding:12px;margin-bottom:12px;}
-  .section h3 {font-size:16px;}
-
-  /* Inputs & buttons full-width */
-  input, textarea, select {font-size:16px;padding:10px;margin-top:6px;width:100%;box-sizing:border-box;}
-  button {font-size:15px;padding:12px;margin-top:6px;width:100%;box-sizing:border-box;cursor:pointer;}
-  .primary {font-size:17px;padding:14px;}
-
-  /* Business info stack vertically */
-  div[style*="display:flex;gap:15px"] {flex-direction:column !important;gap:10px !important;}
-  div[style*="flex:0 0 150px"] {flex:unset !important;width:100% !important;}
-  div[style*="flex:0 0 200px"] {flex:unset !important;width:100% !important;}
-
-  /* Line item rows: stack service on top, qty+price side by side */
-  .item-columns {display:none;}
-  .item-row {display:grid;grid-template-columns:1fr 80px 100px;gap:6px;margin-bottom:10px;}
-  .item-row input:first-child {grid-column:1 / -1;flex:unset;}
-  .item-row input[type="number"] {flex:unset;}
-  .item-row input[type="number"]:last-child {flex:unset;}
-  .item-row button {grid-column:1 / -1;padding:8px;font-size:13px;}
-
-  /* Totals */
-  .totals {text-align:left;font-size:15px;}
-  .totals .total {font-size:22px;}
-
-  /* Invoice/quote preview */
-  .preview {padding:15px;margin:10px 0;max-width:none;}
-  .invoice-box {padding:15px;margin:10px 0;border-radius:10px;}
-  .invoice-box h2 {font-size:22px;}
-  .invoice-header {flex-direction:column;text-align:center;padding-bottom:12px;}
-  .business-info {max-width:100%;text-align:center;margin-bottom:12px;}
-  .business-info h1 {font-size:22px;}
+  .card {padding:15px;margin:10px;}
+  .section {padding:12px;margin-bottom:20px;}
+  .invoice-box {padding:15px;margin:10px;}
+  .invoice-header {flex-direction:column;text-align:center;border-bottom:1px solid #00ee58;padding-bottom:15px;}
+  .business-info {max-width:100%;text-align:center;margin-bottom:15px;}
+  .business-info h1 {font-size:24px;margin-bottom:10px;}
+  .business-info p {font-size:13px;}
   .invoice-meta {text-align:center;}
-  .invoice-meta h2 {font-size:18px;}
-  .invoice-table {font-size:13px;min-width:480px;}
-  .invoice-table th, .invoice-table td {padding:6px 4px;}
+  .invoice-meta h2 {font-size:20px;}
+  .invoice-table {font-size:14px;}
+  .invoice-table th, .invoice-table td {padding:6px 3px;}
+  .total-col {text-align:right;}
+  .bill-to-section {margin:20px 0;}
   .bill-to-section h3 {font-size:16px;}
-  .totals-section {text-align:left;}
-  #buttons {display:grid !important;grid-template-columns:1fr;gap:8px !important;}
-  #buttons button {width:100%;margin:0;min-height:44px;}
-  .actions {display:grid;grid-template-columns:1fr;gap:8px;}
-  .actions button, .actions select {width:100%;margin-top:0;}
-  #historyView .card, #settingsView .card, #customerListView .card {padding:10px;}
-
-  /* History entries */
-  .quote-entry {flex-direction:column;align-items:flex-start;gap:10px;}
-  .quote-entry > span:last-child, .quote-entry > div:last-child {display:flex;gap:8px;width:100%;}
-  .quote-entry button {width:auto;flex:1;margin-top:0;}
-
-  /* Status badges */
+  .totals-section {margin:25px 0;text-align:left;}
+  input, textarea, select, button {font-size:16px;padding:10px;margin:5px 0;width:100%;box-sizing:border-box;}
+  .primary, .secondary {width:100%;margin:5px 0;}
   .status-badge {font-size:11px;padding:3px 8px;}
-
-  /* History tabs */
-  .history-tabs {display:flex;gap:8px;margin-bottom:12px;}
-  .history-tab {flex:1;padding:10px;font-size:14px;}
-}
-
-/* ── Dashboard ── */
-#dashboard {display:block;}
-#appContainer {display:none;}
-.dash-grid {display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;}
-.dash-card {
-  background:#1f2937;
-  border-radius:14px;
-  padding:24px 16px;
-  text-align:center;
-  cursor:pointer;
-  border:2px solid #374151;
-  transition:border-color 0.2s, transform 0.15s, box-shadow 0.2s;
-  user-select:none;
-}
-.dash-card:hover {border-color:#00ee58;transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,238,88,0.15);}
-.dash-card:active {transform:scale(0.97);}
-.dash-card .dash-icon {font-size:38px;margin-bottom:10px;}
-.dash-card .dash-label {font-size:15px;font-weight:700;color:#f1f5f9;letter-spacing:0.3px;}
-.dash-card .dash-sub {font-size:12px;color:#6b7280;margin-top:4px;}
-.dash-card.premium-card {border-color:#f59e0b22;}
-.dash-card.premium-card:hover {border-color:#f59e0b;box-shadow:0 6px 20px rgba(245,158,11,0.15);}
-.dash-back {background:none;border:none;color:#6b7280;font-size:14px;padding:6px 0;margin-bottom:8px;cursor:pointer;text-align:left;width:auto;}
-.dash-back:hover {color:#00ee58;}
-@media (max-width: 480px) {
-  body {padding:8px;}
-  .dash-grid {gap:10px;}
-  .dash-card {padding:18px 10px;}
-  .dash-card .dash-icon {font-size:32px;}
-  .dash-card .dash-label {font-size:14px;}
-  .invoice-box, .preview {padding:12px;}
+  #buttons {display:flex;flex-direction:column;gap:10px;}
+  #buttons button {width:100%;}
 }
 </style>
 
@@ -179,65 +98,52 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 
 <body>
 
-<!-- ── DASHBOARD ── -->
-<div id="dashboard" class="card">
-  <h2 style="margin:0 0 4px 0;">JobFlow Pro</h2>
-  <div id="dashBanner" class="mode-banner" style="margin-bottom:12px;">
-    <strong id="dashPlanBadge">Free Plan</strong>
-    <span id="dashPlanMsg">Upgrade to unlock history features.</span>
-  </div>
-  <div class="dash-grid">
-    <button type="button" class="dash-card" id="dashCreateInvoiceBtn" onclick="openForm('invoice')">
-      <div class="dash-icon">🧾</div>
-      <div class="dash-label">Create Invoice</div>
-      <div class="dash-sub">Bill a customer</div>
-    </button>
-    <button type="button" class="dash-card" id="dashCreateQuoteBtn" onclick="openForm('quote')">
-      <div class="dash-icon">📋</div>
-      <div class="dash-label">Create Quote</div>
-      <div class="dash-sub">Send a price estimate</div>
-    </button>
-    <button type="button" class="dash-card premium-card" id="dashInvHistory" onclick="openInvoiceHistory()">
-      <div class="dash-icon">📂</div>
-      <div class="dash-label">Invoice History</div>
-      <div class="dash-sub" id="dashInvSub">Free: up to 3 saved</div>
-    </button>
-    <button type="button" class="dash-card premium-card" id="dashQuoteHistory" onclick="openQuoteHistoryDash()">
-      <div class="dash-icon">📜</div>
-      <div class="dash-label">Quote History</div>
-      <div class="dash-sub">View past quotes</div>
-    </button>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
-    <button type="button" class="dash-card" id="dashCustomersBtn" onclick="openCustomerList()">
-      <div class="dash-icon">👥</div>
-      <div class="dash-label">Customers</div>
-      <div class="dash-sub">View &amp; manage</div>
-    </button>
-    <button type="button" class="dash-card" id="dashSettingsBtn" onclick="openSettings()">
-      <div class="dash-icon">⚙️</div>
-      <div class="dash-label">Business Info</div>
-      <div class="dash-sub">Logo, name, contact</div>
-    </button>
-  </div>
-  <div style="margin-top:14px;">
-    <button type="button" class="dash-card" id="dashAccountBtn" onclick="openAccountDetails()" style="width:100%;">
-      <div class="dash-icon">👤</div>
-      <div class="dash-label">Account Details</div>
-      <div class="dash-sub">Plan, login, and session info</div>
-      <div class="dash-sub" id="dashAccountSync" style="margin-top:6px;color:#94a3b8;">Last synced: never</div>
-    </button>
-  </div>
-  <button id="upgradeBtn" class="upgrade-btn" style="width:100%;margin-top:14px;" onclick="upgrade()">Upgrade to Premium</button>
-</div>
-
-<!-- ── FORM ── -->
-<div class="card" id="appContainer" style="display:none;">
-<button class="dash-back" onclick="showDashboard()">&#8592; Dashboard</button>
+<div class="card" id="appContainer">
 <h2>JobFlow Pro</h2>
 <div id="modeBanner" class="mode-banner">
   <strong id="planBadge">Free Plan</strong>
   <span id="planMessage">Create invoices and quotes. Upgrade to unlock history and premium export features.</span>
+</div>
+
+<div class="section">
+<h3>Business Info</h3>
+<div style="display:flex;gap:15px;align-items:flex-start;">
+<div style="flex:1;">
+<input id="businessName" placeholder="Your Business Name" value="Your Business Name" onblur="saveBusinessInfo()">
+<input id="businessAddress" placeholder="123 Main St, Murfreesboro, TN" value="123 Main St, Murfreesboro, TN" onblur="saveBusinessInfo()">
+<input id="businessPhone" placeholder="615-XXX-XXXX" value="615-XXX-XXXX" onblur="saveBusinessInfo()">
+<input id="businessEmail" placeholder="you@email.com" value="you@email.com" onblur="saveBusinessInfo()">
+<input id="businessStripeUrl" placeholder="Stripe Checkout Link (optional)" onblur="saveBusinessInfo()">
+<input id="businessLicense" placeholder="License Number (optional)" onblur="saveBusinessInfo()">
+<button onclick="saveBusinessInfo()" style="margin-top:10px;padding:8px 16px;background:#00ee58;color:black;border:none;border-radius:6px;font-weight:bold;">Save Business Info</button>
+</div>
+<div style="flex:0 0 150px;">
+<label for="logoUpload" style="display:block;margin-bottom:8px;font-weight:bold;color:#00ee58;">Company Logo:</label>
+<input type="file" id="logoUpload" accept="image/*" onchange="handleLogoUpload(event)" style="margin-bottom:8px;">
+<div id="logoPreview" style="border:2px dashed #374151;padding:10px;text-align:center;border-radius:6px;min-height:60px;display:flex;align-items:center;justify-content:center;">
+<span style="color:#6b7280;font-size:12px;">No logo uploaded</span>
+</div>
+<label for="logoSize" style="display:block;margin-top:8px;margin-bottom:4px;font-weight:bold;color:#00ee58;font-size:12px;">Logo Size:</label>
+<input type="range" id="logoSize" min="30" max="150" value="50" oninput="updateLogoSize()" style="width:100%;">
+<span id="logoSizeValue" style="font-size:11px;color:#6b7280;">50px</span>
+<label for="logoCrop" style="display:block;margin-top:8px;margin-bottom:4px;font-weight:bold;color:#00ee58;font-size:12px;">Logo Position:</label>
+<select id="logoCrop" onchange="updateLogoCrop()" style="width:100%;padding:4px;border:1px solid #374151;border-radius:4px;background:#1f2937;color:white;font-size:12px;">
+  <option value="center">Center</option>
+  <option value="top">Top</option>
+  <option value="bottom">Bottom</option>
+  <option value="left">Left</option>
+  <option value="right">Right</option>
+  <option value="top left">Top Left</option>
+  <option value="top right">Top Right</option>
+  <option value="bottom left">Bottom Left</option>
+  <option value="bottom right">Bottom Right</option>
+</select>
+</div>
+<div style="flex:0 0 200px;">
+<label style="display:block;margin-bottom:8px;font-weight:bold;color:#00ee58;">Signature Name:</label>
+<input id="businessSignatureName" placeholder="Type your name for signature" onblur="saveBusinessInfo()" style="width:100%;padding:8px;border:1px solid #374151;border-radius:6px;background:#1f2937;color:white;">
+</div>
+</div>
 </div>
 
 <div class="section">
@@ -273,7 +179,7 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
   </div>
 </div>
 <div id="items"></div>
-<button id="addItemBtn" type="button" onclick="addItem()">+ Add Item</button>
+<button id="addItemBtn" onclick="addItem()">+ Add Item</button>
 </div>
 
 <div class="section">
@@ -301,14 +207,17 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 
 <div class="section">
 <h3>Actions</h3>
-<button id="createInvoiceBtn" type="button" class="primary" onclick="createDoc()">Create Invoice</button>
-<button id="createQuoteBtn" type="button" class="secondary" onclick="createQuote()">Create Quote</button>
-<button id="previewInvoiceBtn" type="button" class="utility" onclick="previewInvoice()">Preview Invoice</button>
+<button class="primary" onclick="createDoc()">Create Invoice</button>
+<button class="secondary" onclick="createQuote()">Create Quote</button>
+<button class="utility premium-only locked" onclick="showQuoteHistory()" id="quoteHistoryBtn">Quote History (Premium)</button>
+<button class="utility premium-only locked" onclick="showInvoiceHistory()" id="invoiceHistoryBtn">Invoice History (Premium)</button>
+<button class="utility" onclick="previewInvoice()">Preview Invoice</button>
 </div>
 
 <div class="actions">
-  <button id="sendEmailBtn" type="button" onclick="sendEmail()">Send Email</button>
-  <button id="sendQuoteConvertBtn" type="button" onclick="sendQuoteThenConvert()">Send Quote + Convert</button>
+  <button type="button" onclick="showQuoteHistory('accepted')">Accepted Quotes</button>
+  <button type="button" onclick="sendQuoteThenConvert()">Send Quote + Convert</button>
+
   <button type="button" onclick="saveCurrentAsTemplate()">Save Template</button>
   <select id="templateSelect">
     <option value="">Select Template</option>
@@ -316,99 +225,22 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
   <button type="button" onclick="applySelectedTemplate()">Apply Template</button>
 </div>
 
-<button type="button" onclick="resetApp()" class="danger">Reset App</button>
+<button id="upgradeBtn" class="upgrade-btn" onclick="upgrade()">Upgrade to Premium</button>
+
+<button onclick="resetApp()" class="danger">Reset App</button>
 </div>
 
-<div id="historyView" style="display:none;">
-  <div class="card">
-    <button class="dash-back" onclick="showDashboard()">&#8592; Dashboard</button>
-    <div id="output"></div>
-  </div>
-</div>
-
-<!-- Loading spinner -->
-<div id="spinner" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:14px;">
-  <div style="width:48px;height:48px;border:5px solid #374151;border-top-color:#00ee58;border-radius:50%;animation:spin 0.7s linear infinite;"></div>
-  <div id="spinnerMsg" style="color:#f1f5f9;font-size:15px;font-weight:600;">Loading...</div>
-</div>
-<style>
-@keyframes spin{to{transform:rotate(360deg);}}
-@media print {
-  body > *:not(#historyView) { display: none !important; }
-  #historyView { display: block !important; }
-  #historyView .dash-back, #historyView #buttons, #historyView button { display: none !important; }
-  .invoice-box { box-shadow: none !important; border: none !important; }
-}
-</style>
+<div id="output"></div>
 
 <div class="preview" id="previewArea"></div>
 
-<!-- ── SETTINGS VIEW ── -->
-<div id="settingsView" style="display:none;">
-  <div class="card">
-    <button class="dash-back" onclick="showDashboard()">&#8592; Dashboard</button>
-    <h2 style="margin:0 0 14px;">Business Info</h2>
-    <div class="section">
-      <input id="businessName" placeholder="Business Name" onblur="saveBusinessInfo()">
-      <input id="businessAddress" placeholder="Address" onblur="saveBusinessInfo()">
-      <input id="businessPhone" placeholder="Phone" onblur="saveBusinessInfo()">
-      <input id="businessEmail" placeholder="Email" onblur="saveBusinessInfo()">
-      <input id="businessStripeUrl" placeholder="Stripe Checkout Link (optional)" onblur="saveBusinessInfo()">
-      <input id="businessLicense" placeholder="License Number (optional)" onblur="saveBusinessInfo()">
-      <input id="businessSignatureName" placeholder="Signature Name" onblur="saveBusinessInfo()">
-    </div>
-    <div class="section">
-      <h3>Logo</h3>
-      <input type="file" id="logoUpload" accept="image/*" onchange="handleLogoUpload(event)">
-      <div id="logoPreview" style="border:2px dashed #374151;padding:10px;text-align:center;border-radius:6px;min-height:60px;display:flex;align-items:center;justify-content:center;margin-top:8px;">
-        <span style="color:#6b7280;font-size:12px;">No logo uploaded</span>
-      </div>
-      <label style="display:block;margin-top:10px;color:#00ee58;font-size:13px;">Logo Size:</label>
-      <input type="range" id="logoSize" min="30" max="150" value="50" oninput="updateLogoSize()" style="width:100%;">
-      <span id="logoSizeValue" style="font-size:11px;color:#6b7280;">50px</span>
-      <label style="display:block;margin-top:10px;color:#00ee58;font-size:13px;">Logo Position:</label>
-      <select id="logoCrop" onchange="updateLogoCrop()">
-        <option value="center">Center</option>
-        <option value="top">Top</option>
-        <option value="bottom">Bottom</option>
-        <option value="left">Left</option>
-        <option value="right">Right</option>
-        <option value="top left">Top Left</option>
-        <option value="top right">Top Right</option>
-        <option value="bottom left">Bottom Left</option>
-        <option value="bottom right">Bottom Right</option>
-      </select>
-    </div>
-    <button onclick="saveBusinessInfo();alert('Saved!');" class="primary">Save Business Info</button>
-  </div>
-</div>
-
-<!-- ── CUSTOMER LIST VIEW ── -->
-<div id="customerListView" style="display:none;">
-  <div class="card">
-    <button class="dash-back" onclick="showDashboard()">&#8592; Dashboard</button>
-    <h2 style="margin:0 0 14px;">Customers</h2>
-    <div id="customerListOutput"></div>
-  </div>
-</div>
-
-<!-- ── ACCOUNT VIEW ── -->
-<div id="accountView" style="display:none;">
-  <div class="card">
-    <button class="dash-back" onclick="showDashboard()">&#8592; Dashboard</button>
-    <h2 style="margin:0 0 14px;">Account Details</h2>
-    <div id="accountDetailsOutput"></div>
-    <button type="button" class="danger" style="margin-top:12px;" onclick="logoutUser()">Log Out</button>
-  </div>
-</div>
-
-<script src="calculator.js?v=20260419b"></script>
-<script src="dom.js?v=20260419b"></script>
-<script src="storage.js?v=20260419b"></script>
-<script src="ui.js?v=20260419b"></script>
-<script src="business.js?v=20260419b"></script>
-<script src="documents.js?v=20260419b"></script>
-<script src="app.js?v=20260419b"></script>
+<script src="calculator.js"></script>
+<script src="dom.js"></script>
+<script src="storage.js"></script>
+<script src="ui.js"></script>
+<script src="business.js"></script>
+<script src="documents.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>
