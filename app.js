@@ -130,6 +130,7 @@ function showDoneScreen(docNumber, stripeUrl, mode) {
   const doneMessage = document.getElementById("doneMessage");
   const openPaymentLinkBtn = document.getElementById("openPaymentLinkBtn");
   const sendAnotherBtn = document.getElementById("sendAnotherBtn");
+  App.lastDoneMode = docMode;
 
   if (doneTitle) doneTitle.textContent = docMode === "quote" ? "Quote Sent!" : "Invoice Sent!";
   if (doneMessage) {
@@ -137,7 +138,10 @@ function showDoneScreen(docNumber, stripeUrl, mode) {
       ? "Your quote is ready and has been added to your quote history."
       : "Your invoice has been created and is ready to send.";
   }
-  if (openPaymentLinkBtn) openPaymentLinkBtn.style.display = docMode === "quote" ? "none" : "block";
+  if (openPaymentLinkBtn) {
+    openPaymentLinkBtn.style.display = "block";
+    openPaymentLinkBtn.textContent = docMode === "quote" ? "Send Quote Email" : "Open Payment Link";
+  }
   if (sendAnotherBtn) sendAnotherBtn.textContent = docMode === "quote" ? "Send Another Quote" : "Send Another";
   
   // Update payment link container
@@ -156,6 +160,20 @@ function showDoneScreen(docNumber, stripeUrl, mode) {
 }
 
 function openPaymentLink() {
+  if (App.lastDoneMode === "quote") {
+    const quote = normalizeDocNumber(App.activeQuoteNumber)
+      ? getStoredQuoteByNumber(App.activeQuoteNumber)
+      : (typeof getDocumentData === "function" ? getDocumentData() : null);
+    const preferred = (typeof getBestCustomerEmail === "function") ? getBestCustomerEmail(quote || {}) : "";
+    Promise.resolve(sendEmail(preferred)).then(function (sent) {
+      if (sent) {
+        const doneMessage = document.getElementById("doneMessage");
+        if (doneMessage) doneMessage.textContent = "Quote emailed successfully.";
+      }
+    });
+    return;
+  }
+
   if (App.lastStripeUrl) {
     window.open(App.lastStripeUrl, "_blank");
   } else {
