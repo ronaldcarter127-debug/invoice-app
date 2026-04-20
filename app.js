@@ -758,6 +758,7 @@ window.updateDashboardAccountSync = updateDashboardAccountSync;
 function bindPrimaryActionButtons() {
   const createInvoiceBtn = $id("createInvoiceBtn");
   const createQuoteBtn = $id("createQuoteBtn");
+  const saveBusinessInfoBtn = $id("saveBusinessInfoBtn");
   const previewInvoiceBtn = $id("previewInvoiceBtn");
   const addItemBtn = $id("addItemBtn");
   const dashCreateInvoiceBtn = $id("dashCreateInvoiceBtn");
@@ -770,6 +771,7 @@ function bindPrimaryActionButtons() {
 
   if (createInvoiceBtn) createInvoiceBtn.onclick = function () { createDoc(); };
   if (createQuoteBtn) createQuoteBtn.onclick = function () { createQuote(); };
+  if (saveBusinessInfoBtn) saveBusinessInfoBtn.onclick = function () { saveBusinessInfo(); alert("Saved!"); };
   if (previewInvoiceBtn) previewInvoiceBtn.onclick = function () { previewInvoice(); };
   if (addItemBtn) addItemBtn.onclick = function () { addItem(); };
   if (dashCreateInvoiceBtn) dashCreateInvoiceBtn.onclick = function () { openForm("invoice"); };
