@@ -755,6 +755,25 @@ window.openInvoiceHistory = openInvoiceHistory;
 window.openQuoteHistoryDash = openQuoteHistoryDash;
 window.updateDashboardAccountSync = updateDashboardAccountSync;
 
+function bindTap(el, handler) {
+  if (!el || typeof handler !== "function") return;
+
+  const KEY = "__lastTapAt";
+  const invoke = function (event) {
+    const now = Date.now();
+    const last = Number(el[KEY] || 0);
+    if (now - last < 350) return;
+    el[KEY] = now;
+    try {
+      if (event && typeof event.preventDefault === "function") event.preventDefault();
+    } catch (_) {}
+    handler(event);
+  };
+
+  el.onclick = invoke;
+  el.addEventListener("touchend", invoke, { passive: false });
+}
+
 function bindPrimaryActionButtons() {
   const createInvoiceBtn = $id("createInvoiceBtn");
   const createQuoteBtn = $id("createQuoteBtn");
@@ -769,18 +788,28 @@ function bindPrimaryActionButtons() {
   const dashInvHistoryBtn = $id("dashInvHistory");
   const dashQuoteHistoryBtn = $id("dashQuoteHistory");
 
-  if (createInvoiceBtn) createInvoiceBtn.onclick = function () { createDoc(); };
-  if (createQuoteBtn) createQuoteBtn.onclick = function () { createQuote(); };
-  if (saveBusinessInfoBtn) saveBusinessInfoBtn.onclick = function () { saveBusinessInfo(); alert("Saved!"); };
-  if (previewInvoiceBtn) previewInvoiceBtn.onclick = function () { previewInvoice(); };
-  if (addItemBtn) addItemBtn.onclick = function () { addItem(); };
-  if (dashCreateInvoiceBtn) dashCreateInvoiceBtn.onclick = function () { openForm("invoice"); };
-  if (dashCreateQuoteBtn) dashCreateQuoteBtn.onclick = function () { openForm("quote"); };
-  if (dashCustomersBtn) dashCustomersBtn.onclick = function () { openCustomerList(); };
-  if (dashSettingsBtn) dashSettingsBtn.onclick = function () { openSettings(); };
-  if (dashAccountBtn) dashAccountBtn.onclick = function () { openAccountDetails(); };
-  if (dashInvHistoryBtn) dashInvHistoryBtn.onclick = function () { openInvoiceHistory(); };
-  if (dashQuoteHistoryBtn) dashQuoteHistoryBtn.onclick = function () { openQuoteHistoryDash(); };
+  bindTap(createInvoiceBtn, function () { createDoc(); });
+  bindTap(createQuoteBtn, function () { createQuote(); });
+  bindTap(saveBusinessInfoBtn, function () {
+    saveBusinessInfo();
+    const msg = document.getElementById("settingsSaveMsg");
+    if (msg) {
+      msg.textContent = "Saved.";
+      msg.style.color = "#22c55e";
+      setTimeout(function () {
+        if (msg.textContent === "Saved.") msg.textContent = "";
+      }, 1800);
+    }
+  });
+  bindTap(previewInvoiceBtn, function () { previewInvoice(); });
+  bindTap(addItemBtn, function () { addItem(); });
+  bindTap(dashCreateInvoiceBtn, function () { openForm("invoice"); });
+  bindTap(dashCreateQuoteBtn, function () { openForm("quote"); });
+  bindTap(dashCustomersBtn, function () { openCustomerList(); });
+  bindTap(dashSettingsBtn, function () { openSettings(); });
+  bindTap(dashAccountBtn, function () { openAccountDetails(); });
+  bindTap(dashInvHistoryBtn, function () { openInvoiceHistory(); });
+  bindTap(dashQuoteHistoryBtn, function () { openQuoteHistoryDash(); });
 }
 
 let accountSyncInFlight = false;
