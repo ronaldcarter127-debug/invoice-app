@@ -586,6 +586,46 @@ function checkPaymentReturn() {
   }
 }
 
+// ─── Dashboard Recent Invoices ────────────────────────────────────────────────
+
+function loadAndDisplayRecentInvoices() {
+  const container = document.getElementById("dashRecentInvoices");
+  if (!container) return;
+
+  try {
+    const allInvoices = typeof getSavedInvoices === "function" ? getSavedInvoices() : [];
+    if (!allInvoices || !allInvoices.length) {
+      container.innerHTML = '<div style="font-size:13px;color:#6b7280;padding:12px 0;text-align:center;">No invoices yet</div>';
+      return;
+    }
+
+    // Get last 5 invoices, newest first
+    const recent = allInvoices.slice().reverse().slice(0, 5);
+    
+    let html = "";
+    recent.forEach(function(inv) {
+      const status = inv.status || "Unpaid";
+      const statusClass = status.toLowerCase();
+      const total = Number(inv.finalTotal || inv.total || 0);
+      const customer = inv.customer || "Unnamed Client";
+      const invNum = inv.invoiceNumber || "—";
+      
+      html += '<div class="dash-invoice-entry">';
+      html += '  <div class="dash-invoice-left">';
+      html += '    <div class="dash-invoice-num">' + invNum + '</div>';
+      html += '    <div class="dash-invoice-cust">' + customer + '</div>';
+      html += '    <div class="dash-invoice-amt">$' + total.toFixed(2) + '</div>';
+      html += '  </div>';
+      html += '  <div class="dash-invoice-status ' + statusClass + '">' + status.toUpperCase() + '</div>';
+      html += '</div>';
+    });
+    
+    container.innerHTML = html;
+  } catch (e) {
+    container.innerHTML = '<div style="font-size:13px;color:#6b7280;padding:12px 0;text-align:center;">Unable to load invoices</div>';
+  }
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 function showOutputView() {
@@ -614,6 +654,7 @@ function showDashboard() {
   if (previewArea) previewArea.classList.remove("show");
   updateDashboard();
   updateDashboardAccountSync();
+  loadAndDisplayRecentInvoices();
 }
 
 function updateDashboard() {
