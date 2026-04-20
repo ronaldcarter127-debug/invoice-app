@@ -10,7 +10,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>JobFlow Pro</title>
-<link rel="manifest" href="manifest.json?v=20260419o">
+<link rel="manifest" href="manifest.json?v=20260419p">
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Allura&family=Alex+Brush&display=swap" rel="stylesheet">
 
 <style>
@@ -305,41 +305,24 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 
 .dash-welcome {font-size:13px;color:#9ca3af;letter-spacing:0.4px;margin:0 0 8px 0;position:relative;z-index:1;}
 
-.dash-hero-btn {
-  width:100%;
+.dash-entry-split {display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:1;}
+.dash-entry-btn {
   border-radius:14px;
-  border:1px solid rgba(245, 158, 11, 0.38);
-  background:linear-gradient(180deg, rgba(245,158,11,0.11), rgba(245,158,11,0.04));
+  border:1px solid #2a3757;
+  background:linear-gradient(180deg, rgba(17,24,39,0.9), rgba(12,18,34,0.88));
   color:#f8fafc;
-  box-shadow:0 0 0 1px rgba(245, 158, 11, 0.18), 0 0 24px rgba(245, 158, 11, 0.18);
-  padding:14px;
-  display:flex;
-  align-items:center;
-  gap:12px;
+  padding:13px;
   text-align:left;
   cursor:pointer;
-  position:relative;
-  z-index:1;
+  box-shadow:0 8px 22px rgba(0,0,0,0.28);
 }
-.dash-hero-btn:hover {box-shadow:0 0 0 1px rgba(245, 158, 11, 0.35), 0 0 30px rgba(245, 158, 11, 0.24);}
-.dash-hero-plus {
-  width:30px;
-  height:30px;
-  border-radius:999px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#111827;
-  color:#f59e0b;
-  border:1px solid rgba(245,158,11,0.5);
-  font-size:20px;
-  font-weight:700;
-  flex-shrink:0;
-}
-.dash-hero-title {font-size:20px;font-weight:800;line-height:1.2;color:#fff;}
-.dash-hero-sub {font-size:12px;color:#d1d5db;margin-top:2px;}
+.dash-entry-btn:hover {transform:translateY(-1px);}
+.dash-entry-btn .dash-entry-title {display:block;font-size:15px;font-weight:800;letter-spacing:0.2px;}
+.dash-entry-btn .dash-entry-sub {display:block;font-size:11px;color:#cbd5e1;margin-top:4px;}
+.dash-entry-btn.invoice {border-color:rgba(245,158,11,0.45);box-shadow:0 0 0 1px rgba(245,158,11,0.16), 0 0 24px rgba(245,158,11,0.14);}
+.dash-entry-btn.quote {border-color:rgba(59,130,246,0.45);box-shadow:0 0 0 1px rgba(59,130,246,0.16), 0 0 24px rgba(59,130,246,0.12);}
 
-.dash-main-grid {display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-top:14px;position:relative;z-index:1;}
+.dash-main-grid {display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;position:relative;z-index:1;}
 .dash-column {display:grid;gap:12px;}
 .dash-panel {
   background:linear-gradient(180deg, rgba(15,23,42,0.92), rgba(12,18,34,0.9));
@@ -359,24 +342,43 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 .dash-panel-title-row h3 {margin:0;}
 .dash-mini-link {font-size:11px;color:#f59e0b;cursor:pointer;}
 
-/* Recent Invoices */
-.dash-invoice-entry {
+/* Pipeline lists */
+.dash-pipeline-groups {display:grid;gap:10px;}
+.dash-group {
+  border:1px solid #243354;
+  border-radius:10px;
+  background:linear-gradient(180deg, rgba(11,18,34,0.72), rgba(11,18,34,0.48));
+  overflow:hidden;
+}
+.dash-group-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px 10px;
+  border-bottom:1px solid #243354;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.4px;
+  color:#cbd5e1;
+}
+.dash-group-count {font-weight:700;color:#f8fafc;}
+.dash-item-list {padding:4px 10px 8px 10px;}
+.dash-item-row {
   display:flex;
   justify-content:space-between;
   align-items:flex-start;
-  padding:10px 0;
-  border-bottom:1px solid #1f2a44;
-  font-size:13px;
+  gap:8px;
+  padding:8px 0;
+  border-bottom:1px solid #1e2b48;
 }
-.dash-invoice-entry:last-child {border-bottom:none;}
-.dash-invoice-left {flex:1;}
-.dash-invoice-num {font-weight:600;color:#f8fafc;margin-bottom:3px;}
-.dash-invoice-cust {font-size:12px;color:#9ca3af;margin-bottom:2px;}
-.dash-invoice-amt {font-weight:700;color:#34d399;font-size:14px;margin-bottom:3px;}
-.dash-invoice-status {display:inline-block;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600;text-transform:uppercase;background:rgba(34,197,94,0.15);color:#34d399;}
-.dash-invoice-status.unpaid {background:rgba(107,114,128,0.15);color:#9ca3af;}
-.dash-invoice-status.partial {background:rgba(245,158,11,0.15);color:#f59e0b;}
-.dash-invoice-status.paid {background:rgba(34,197,94,0.15);color:#34d399;}
+.dash-item-row:last-child {border-bottom:none;}
+.dash-item-main {min-width:0;}
+.dash-item-title {font-size:12px;font-weight:700;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;}
+.dash-item-meta {font-size:11px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;margin-top:2px;}
+.dash-item-amount {font-size:12px;font-weight:800;color:#e5e7eb;white-space:nowrap;}
+.dash-item-empty {font-size:11px;color:#64748b;padding:2px 0;}
+.dash-utility-row {display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px;}
+.dash-utility-row .dash-card {padding:10px;}
 
 .dash-card {
   width:100%;
@@ -416,8 +418,9 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 @media (max-width: 480px) {
   body {padding:8px;}
   #dashboard {max-width:none;}
-  .dash-hero-title {font-size:18px;}
+  .dash-entry-split {grid-template-columns:1fr;}
   .dash-main-grid {grid-template-columns:1fr;gap:10px;}
+  .dash-utility-row {grid-template-columns:1fr;}
   .dash-card {padding:11px;}
   .dash-card .dash-icon {font-size:16px;}
   .dash-card .dash-label {font-size:13px;}
@@ -437,57 +440,58 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
     <span id="dashPlanMsg">Upgrade to unlock history features.</span>
   </div>
 
-  <button type="button" class="dash-hero-btn" id="dashCreateInvoiceBtn" onclick="openForm('invoice')">
-    <span class="dash-hero-plus">+</span>
-    <span>
-      <span class="dash-hero-title">Send Invoice & Get Paid</span>
-      <span class="dash-hero-sub">Create, send, and track payments in 60 seconds.</span>
-    </span>
-  </button>
+  <div class="dash-entry-split">
+    <button type="button" class="dash-entry-btn invoice" id="dashCreateInvoiceBtn" onclick="openForm('invoice')">
+      <span class="dash-entry-title">Create Invoice (Get Paid Now)</span>
+      <span class="dash-entry-sub">Best for quick jobs and same-day payment.</span>
+    </button>
+    <button type="button" class="dash-entry-btn quote" id="dashCreateQuoteBtn" onclick="openForm('quote')">
+      <span class="dash-entry-title">Create Quote</span>
+      <span class="dash-entry-sub">Best for bigger jobs that need approval first.</span>
+    </button>
+  </div>
 
   <div class="dash-main-grid">
     <div class="dash-column">
       <div class="dash-panel">
         <div class="dash-panel-title-row">
-          <h3>Recent Invoices</h3>
-          <span class="dash-mini-link" onclick="openInvoiceHistory()" style="cursor:pointer;">All</span>
+          <h3>Quotes</h3>
+          <span class="dash-mini-link" onclick="openQuoteHistoryDash()" style="cursor:pointer;">All</span>
         </div>
-        <div id="dashRecentInvoices" style="max-height:200px;overflow-y:auto;">
-          <div style="font-size:13px;color:#6b7280;padding:12px 0;text-align:center;">Loading invoices...</div>
+        <div id="dashQuotesPipeline" class="dash-pipeline-groups">
+          <div class="dash-item-empty">Loading quotes...</div>
         </div>
       </div>
     </div>
 
     <div class="dash-column">
       <div class="dash-panel">
-        <h3>Customers</h3>
-        <div class="dash-side-stack">
-          <button type="button" class="dash-card" id="dashCustomersBtn" onclick="openCustomerList()" style="margin-top:0;">
-            <div class="dash-icon">👥</div>
-            <div class="dash-label">View &amp; Manage</div>
-            <div class="dash-sub">Manage your saved client list.</div>
-          </button>
-
-          <button type="button" class="dash-card" id="dashSettingsBtn" onclick="openSettings()" style="margin-top:0;">
-            <div class="dash-icon">⚙️</div>
-            <div class="dash-label">Business Settings</div>
-            <div class="dash-sub">Brand, logo, and contact details.</div>
-          </button>
-
-          <button type="button" class="dash-card" id="dashAccountBtn" onclick="openAccountDetails()" style="margin-top:0;">
-            <div class="dash-account-row">
-              <div>
-                <div class="dash-label">Account Details</div>
-                <div class="dash-sub">Plan and session info</div>
-              </div>
-              <div class="dash-icon" style="margin:0;">👤</div>
-            </div>
-            <div class="dash-sub" id="dashAccountSync" style="margin-top:8px;color:#94a3b8;">Last synced: never</div>
-          </button>
+        <div class="dash-panel-title-row">
+          <h3>Invoices</h3>
+          <span class="dash-mini-link" onclick="openInvoiceHistory()" style="cursor:pointer;">All</span>
+        </div>
+        <div id="dashInvoicesPipeline" class="dash-pipeline-groups">
+          <div class="dash-item-empty">Loading invoices...</div>
         </div>
       </div>
     </div>
   </div>
+
+  <div class="dash-utility-row">
+    <button type="button" class="dash-card" id="dashCustomersBtn" onclick="openCustomerList()" style="margin-top:0;">
+      <div class="dash-label">Customers</div>
+      <div class="dash-sub">View and manage clients</div>
+    </button>
+    <button type="button" class="dash-card" id="dashSettingsBtn" onclick="openSettings()" style="margin-top:0;">
+      <div class="dash-label">Settings</div>
+      <div class="dash-sub">Business profile and branding</div>
+    </button>
+    <button type="button" class="dash-card" id="dashAccountBtn" onclick="openAccountDetails()" style="margin-top:0;">
+      <div class="dash-label">Account</div>
+      <div class="dash-sub" id="dashAccountSync">Last synced: never</div>
+    </button>
+  </div>
+
   <button id="upgradeBtn" class="upgrade-btn" style="width:100%;margin-top:14px;display:none;" onclick="upgrade()">Upgrade to Premium</button>
 </div>
 
@@ -533,7 +537,7 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 
 <!-- Step 4: Review -->
 <div class="form-step" id="formStep4" data-step="4" style="display:none;">
-  <h3>Review Your Invoice</h3>
+  <h3 id="reviewHeading">Review Your Invoice</h3>
   <div class="review-summary">
     <div class="review-item">
       <span>Client:</span>
@@ -557,9 +561,9 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
       <span>Total</span>
       <span id="reviewTotal" style="font-size:32px;font-weight:900;color:#34d399;">$0.00</span>
     </div>
-    <div class="review-item" style="margin-top:14px;">
+    <div class="review-item" id="reviewDueRow" style="margin-top:14px;">
       <span>Due:</span>
-      <strong>Due Now</strong>
+      <strong id="reviewDueValue">Due Now</strong>
     </div>
   </div>
   <div style="display:flex;gap:10px;margin-top:16px;">
@@ -572,13 +576,13 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
 <div class="form-step" id="formStep5" data-step="5" style="display:none;">
   <div style="text-align:center;padding:20px 0;">
     <div style="font-size:48px;margin-bottom:10px;">✅</div>
-    <h3 style="font-size:24px;margin-bottom:8px;">Invoice Sent!</h3>
-    <p style="color:#9ca3af;font-size:14px;margin-bottom:20px;">Your invoice has been created and is ready to send.</p>
+    <h3 id="doneTitle" style="font-size:24px;margin-bottom:8px;">Invoice Sent!</h3>
+    <p id="doneMessage" style="color:#9ca3af;font-size:14px;margin-bottom:20px;">Your invoice has been created and is ready to send.</p>
     <div id="paymentLinkContainer" style="margin-bottom:20px;"></div>
   </div>
   <div style="display:flex;flex-direction:column;gap:10px;">
     <button id="openPaymentLinkBtn" type="button" class="primary" style="width:100%;" onclick="openPaymentLink()">Open Payment Link</button>
-    <button type="button" class="secondary" style="width:100%;" onclick="createAnother()">Send Another</button>
+    <button id="sendAnotherBtn" type="button" class="secondary" style="width:100%;" onclick="createAnother()">Send Another</button>
   </div>
 </div>
 
@@ -681,13 +685,13 @@ body.premium-mode .mode-banner strong {color:#fbbf24;}
   </div>
 </div>
 
-<script src="calculator.js?v=20260419o"></script>
-<script src="dom.js?v=20260419o"></script>
-<script src="storage.js?v=20260419o"></script>
-<script src="ui.js?v=20260419o"></script>
-<script src="business.js?v=20260419o"></script>
-<script src="documents.js?v=20260419o"></script>
-<script src="app.js?v=20260419o"></script>
+<script src="calculator.js?v=20260419p"></script>
+<script src="dom.js?v=20260419p"></script>
+<script src="storage.js?v=20260419p"></script>
+<script src="ui.js?v=20260419p"></script>
+<script src="business.js?v=20260419p"></script>
+<script src="documents.js?v=20260419p"></script>
+<script src="app.js?v=20260419p"></script>
 
 </body>
 </html>

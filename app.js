@@ -56,8 +56,11 @@ function nextFormStep(fromStep) {
     showFormStep(4);
     updateReviewScreen();
   } else if (fromStep === 4) {
-    // Create invoice
-    createSteppedInvoice();
+    if (App.formMode === "quote") {
+      createSteppedQuote();
+    } else {
+      createSteppedInvoice();
+    }
   }
 }
 
@@ -66,11 +69,19 @@ function prevFormStep(fromStep) {
 }
 
 function updateReviewScreen() {
+  const mode = App.formMode === "quote" ? "quote" : "invoice";
   const clientName = (document.getElementById("customer") || {}).value || "";
   const clientEmail = (document.getElementById("customerEmail") || {}).value || "";
   const labor = Number((document.getElementById("laborAmount") || {}).value || 0);
   const materials = Number((document.getElementById("materialsAmount") || {}).value || 0);
   const total = labor + materials;
+  const heading = document.getElementById("reviewHeading");
+  const dueRow = document.getElementById("reviewDueRow");
+  const sendBtn = document.getElementById("sendAndGetPaidBtn");
+
+  if (heading) heading.textContent = mode === "quote" ? "Review Your Quote" : "Review Your Invoice";
+  if (dueRow) dueRow.style.display = mode === "quote" ? "none" : "flex";
+  if (sendBtn) sendBtn.textContent = mode === "quote" ? "Send Quote" : "Send & Get Paid";
   
   (document.getElementById("reviewClient") || {}).textContent = clientName;
   (document.getElementById("reviewEmail") || {}).textContent = clientEmail || "(not provided)";
@@ -96,13 +107,43 @@ function createSteppedInvoice() {
   createDoc();
 }
 
-function showDoneScreen(invoiceNumber, stripeUrl) {
+function createSteppedQuote() {
+  const items = [];
+  const labor = Number((document.getElementById("laborAmount") || {}).value || 0);
+  const materials = Number((document.getElementById("materialsAmount") || {}).value || 0);
+
+  if (labor > 0) {
+    items.push({ description: "Labor", qty: 1, price: labor });
+  }
+  if (materials > 0) {
+    items.push({ description: "Materials", qty: 1, price: materials });
+  }
+
+  App.items = items;
+  createQuote();
+}
+
+function showDoneScreen(docNumber, stripeUrl, mode) {
   showFormStep(5);
+  const docMode = mode === "quote" ? "quote" : "invoice";
+  const doneTitle = document.getElementById("doneTitle");
+  const doneMessage = document.getElementById("doneMessage");
+  const openPaymentLinkBtn = document.getElementById("openPaymentLinkBtn");
+  const sendAnotherBtn = document.getElementById("sendAnotherBtn");
+
+  if (doneTitle) doneTitle.textContent = docMode === "quote" ? "Quote Sent!" : "Invoice Sent!";
+  if (doneMessage) {
+    doneMessage.textContent = docMode === "quote"
+      ? "Your quote is ready and has been added to your quote history."
+      : "Your invoice has been created and is ready to send.";
+  }
+  if (openPaymentLinkBtn) openPaymentLinkBtn.style.display = docMode === "quote" ? "none" : "block";
+  if (sendAnotherBtn) sendAnotherBtn.textContent = docMode === "quote" ? "Send Another Quote" : "Send Another";
   
   // Update payment link container
   const container = document.getElementById("paymentLinkContainer");
   if (container) {
-    if (stripeUrl) {
+    if (docMode === "invoice" && stripeUrl) {
       container.innerHTML = '<p style="font-size:13px;color:#9ca3af;">Payment link has been created and your client can pay online.</p>';
     } else {
       container.innerHTML = "";
@@ -110,7 +151,7 @@ function showDoneScreen(invoiceNumber, stripeUrl) {
   }
   
   // Store for later use
-  App.lastInvoiceNumber = invoiceNumber;
+  App.lastInvoiceNumber = docNumber;
   App.lastStripeUrl = stripeUrl;
 }
 
@@ -130,6 +171,7 @@ function createAnother() {
   document.getElementById("materialsAmount").value = "";
   document.getElementById("notes").value = "";
   App.items = [];
+  updateReviewScreen();
   showFormStep(2);
 }
 
@@ -586,43 +628,103 @@ function checkPaymentReturn() {
   }
 }
 
-// ─── Dashboard Recent Invoices ────────────────────────────────────────────────
+// ─── Dashboard Pipelines ──────────────────────────────────────────────────────
 
-function loadAndDisplayRecentInvoices() {
-  const container = document.getElementById("dashRecentInvoices");
-  if (!container) return;
+function escText(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
-  try {
-    const allInvoices = typeof getSavedInvoices === "function" ? getSavedInvoices() : [];
-    if (!allInvoices || !allInvoices.length) {
-      container.innerHTML = '<div style="font-size:13px;color:#6b7280;padding:12px 0;text-align:center;">No invoices yet</div>';
-      return;
-    }
+function toMoney(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "$0.00";
+  return "$" + n.toFixed(2);
+}
 
-    // Get last 5 invoices, newest first
-    const recent = allInvoices.slice().reverse().slice(0, 5);
-    
-    let html = "";
-    recent.forEach(function(inv) {
-      const status = inv.status || "Unpaid";
-      const statusClass = status.toLowerCase();
-      const total = Number(inv.finalTotal || inv.total || 0);
-      const customer = inv.customer || "Unnamed Client";
-      const invNum = inv.invoiceNumber || "—";
-      
-      html += '<div class="dash-invoice-entry">';
-      html += '  <div class="dash-invoice-left">';
-      html += '    <div class="dash-invoice-num">' + invNum + '</div>';
-      html += '    <div class="dash-invoice-cust">' + customer + '</div>';
-      html += '    <div class="dash-invoice-amt">$' + total.toFixed(2) + '</div>';
-      html += '  </div>';
-      html += '  <div class="dash-invoice-status ' + statusClass + '">' + status.toUpperCase() + '</div>';
+function quoteBucket(status) {
+  const s = String(status || "").toLowerCase();
+  if (s.includes("accept")) return "Accepted";
+  if (s.includes("declin") || s.includes("reject")) return "Declined";
+  return "Pending";
+}
+
+function invoiceBucket(invoice) {
+  const explicit = String((invoice && invoice.status) || "").toLowerCase();
+  const resolved = explicit || (typeof getInvoiceStatus === "function" ? String(getInvoiceStatus(invoice) || "").toLowerCase() : "");
+  if (resolved.includes("paid")) return "Paid";
+  if (resolved.includes("overdue")) return "Overdue";
+  return "Pending";
+}
+
+function renderGroup(name, rows) {
+  const items = Array.isArray(rows) ? rows : [];
+  let html = '<div class="dash-group">';
+  html += '<div class="dash-group-head"><span>' + escText(name) + '</span><span class="dash-group-count">' + items.length + '</span></div>';
+  html += '<div class="dash-item-list">';
+  if (!items.length) {
+    html += '<div class="dash-item-empty">No items</div>';
+  } else {
+    items.slice(0, 4).forEach(function (row) {
+      html += '<div class="dash-item-row">';
+      html += '<div class="dash-item-main">';
+      html += '<div class="dash-item-title">' + escText(row.title) + '</div>';
+      html += '<div class="dash-item-meta">' + escText(row.meta) + '</div>';
+      html += '</div>';
+      html += '<div class="dash-item-amount">' + escText(row.amount) + '</div>';
       html += '</div>';
     });
-    
-    container.innerHTML = html;
-  } catch (e) {
-    container.innerHTML = '<div style="font-size:13px;color:#6b7280;padding:12px 0;text-align:center;">Unable to load invoices</div>';
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function loadAndDisplayDashboardPipelines() {
+  const quoteHost = document.getElementById("dashQuotesPipeline");
+  const invoiceHost = document.getElementById("dashInvoicesPipeline");
+  if (!quoteHost || !invoiceHost) return;
+
+  try {
+    const quotes = typeof getStoredQuotes === "function" ? getStoredQuotes() : [];
+    const invoices = typeof getSavedInvoices === "function" ? getSavedInvoices() : [];
+
+    const quoteGroups = { Pending: [], Accepted: [], Declined: [] };
+    (quotes || []).slice().reverse().forEach(function (q) {
+      const bucket = quoteBucket(q && q.status);
+      const amount = Number((q && (q.finalTotal || q.total)) || 0);
+      quoteGroups[bucket].push({
+        title: (q && (q.customer || q.description)) || "Unnamed quote",
+        meta: (q && q.quoteNumber) || "Quote",
+        amount: toMoney(amount)
+      });
+    });
+
+    const invoiceGroups = { Pending: [], Paid: [], Overdue: [] };
+    (invoices || []).slice().reverse().forEach(function (inv) {
+      const bucket = invoiceBucket(inv || {});
+      const amount = Number((inv && (inv.finalTotal || inv.total)) || 0);
+      invoiceGroups[bucket].push({
+        title: (inv && (inv.customer || inv.description)) || "Unnamed invoice",
+        meta: (inv && inv.invoiceNumber) || "Invoice",
+        amount: toMoney(amount)
+      });
+    });
+
+    quoteHost.innerHTML =
+      renderGroup("Pending", quoteGroups.Pending) +
+      renderGroup("Accepted", quoteGroups.Accepted) +
+      renderGroup("Declined", quoteGroups.Declined);
+
+    invoiceHost.innerHTML =
+      renderGroup("Pending", invoiceGroups.Pending) +
+      renderGroup("Paid", invoiceGroups.Paid) +
+      renderGroup("Overdue", invoiceGroups.Overdue);
+  } catch (_) {
+    quoteHost.innerHTML = '<div class="dash-item-empty">Unable to load quotes</div>';
+    invoiceHost.innerHTML = '<div class="dash-item-empty">Unable to load invoices</div>';
   }
 }
 
@@ -654,7 +756,7 @@ function showDashboard() {
   if (previewArea) previewArea.classList.remove("show");
   updateDashboard();
   updateDashboardAccountSync();
-  loadAndDisplayRecentInvoices();
+  loadAndDisplayDashboardPipelines();
 }
 
 function updateDashboard() {
@@ -666,14 +768,10 @@ function updateDashboard() {
   const badge = document.getElementById("dashPlanBadge");
   const msg = document.getElementById("dashPlanMsg");
   const upgradeBtn = document.getElementById("upgradeBtn");
-  const invCard = document.getElementById("dashInvHistory");
-  const invSub = document.getElementById("dashInvSub");
 
   if (badge) badge.textContent = premium ? "Premium Plan Active" : "Free Plan";
-  if (msg) msg.textContent = premium ? "All features unlocked." : "Invoice history: " + usageText + ". Upgrade for unlimited visibility and status.";
-  if (upgradeBtn) upgradeBtn.style.display = premium ? "none" : "block";
-  if (invCard) invCard.style.opacity = premium ? "1" : "0.55";
-  if (invSub) invSub.textContent = premium ? "Unlimited history" : "Free: " + usageText;
+  if (msg) msg.textContent = premium ? "All features unlocked." : "Tracking " + usageText;
+  if (upgradeBtn) upgradeBtn.style.display = "none";
 }
 
 function openForm(mode) {
@@ -686,12 +784,12 @@ function openForm(mode) {
   if (accountView) accountView.style.display = "none";
   App._dashMode = mode;
   App.formMode = mode;
+  updateReviewScreen();
 
   // Initialize stepped form for invoice mode
   if (mode === "invoice") {
     showFormStep(2);
   } else if (mode === "quote") {
-    // For now, quotes still use the old form - this could be extended
     showFormStep(2);
   }
 }

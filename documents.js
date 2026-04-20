@@ -394,6 +394,9 @@ async function syncQuoteToServer(quoteData) {
 // ─── create ───────────────────────────────────────────────────────────────────
 
 function createQuote() {
+  const laborAmount = Number((document.getElementById("laborAmount") || {}).value || 0);
+  const materialsAmount = Number((document.getElementById("materialsAmount") || {}).value || 0);
+  const isSteppedForm = laborAmount > 0 || materialsAmount > 0 || (App.items && App.items.length > 0);
   const data = getDocumentData();
   if (data.total <= 0) { alert("Add at least one item before creating quote"); return; }
 
@@ -413,9 +416,14 @@ function createQuote() {
   syncQuoteToServer(data)
     .then(function () { return syncAccountDocuments(); })
     .catch(function () {});
-  renderDocument("Quote", data, true);
-  resetEntryFieldsAfterCreate();
-  showOutputView();
+
+  if (isSteppedForm && typeof showDoneScreen === "function") {
+    showDoneScreen(data.quoteNumber, "", "quote");
+  } else {
+    renderDocument("Quote", data, true);
+    resetEntryFieldsAfterCreate();
+    showOutputView();
+  }
 }
 
 function createDoc() {
