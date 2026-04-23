@@ -36,14 +36,14 @@
     <button class="sidebar-btn primary" onclick="showInvoiceForm()">+ New Invoice</button>
     <button class="sidebar-btn" onclick="showQuoteForm()">+ New Quote</button>
     <nav class="sidebar-nav">
-      <a class="nav-link active">Dashboard</a>
-      <a class="nav-link">Invoices</a>
-      <a class="nav-link">Quotes</a>
-      <a class="nav-link">Clients</a>
-      <a class="nav-link">Items / Services</a>
-      <a class="nav-link">Payments</a>
-      <a class="nav-link">Reports</a>
-      <a class="nav-link">Settings</a>
+      <a class="nav-link active" id="tabDashboard" onclick="showTab('dashboard')">Dashboard</a>
+      <a class="nav-link" id="tabInvoices" onclick="showTab('invoices')">Invoices</a>
+      <a class="nav-link" id="tabQuotes" onclick="showTab('quotes')">Quotes</a>
+      <a class="nav-link" id="tabClients" onclick="showTab('clients')">Clients</a>
+      <a class="nav-link" id="tabItems" onclick="showTab('items')">Items / Services</a>
+      <a class="nav-link" id="tabPayments" onclick="showTab('payments')">Payments</a>
+      <a class="nav-link" id="tabReports" onclick="showTab('reports')">Reports</a>
+      <a class="nav-link" id="tabSettings" onclick="showTab('settings')">Settings</a>
     </nav>
     <div class="sidebar-help">
       <button class="help-btn">View Help Center</button>
@@ -52,65 +52,21 @@
 
   <!-- Main Content -->
   <main class="dashboard-main">
-    <header class="dashboard-header">
-      <h2>Welcome back, Ronald <span class="wave">👋</span></h2>
-      <p>Here's what's happening with your business today.</p>
-    </header>
-    <section class="dashboard-cards">
-      <div class="card stat-card earned">
-        <div class="stat-title">Total Earned (This Month)</div>
-        <div class="stat-value" id="statTotalEarned">$0.00</div>
-        <div class="stat-sub" id="statEarnedChange"></div>
-      </div>
-      <div class="card stat-card paid">
-        <div class="stat-title">Paid Invoices</div>
-        <div class="stat-value" id="statPaid">$0.00</div>
-        <div class="stat-sub" id="statPaidCount"></div>
-      </div>
-      <div class="card stat-card unpaid">
-        <div class="stat-title">Unpaid Invoices</div>
-        <div class="stat-value" id="statUnpaid">$0.00</div>
-        <div class="stat-sub" id="statUnpaidCount"></div>
-      </div>
-      <div class="card stat-card overdue">
-        <div class="stat-title">Overdue</div>
-        <div class="stat-value" id="statOverdue">$0.00</div>
-        <div class="stat-sub" id="statOverdueCount"></div>
-      </div>
-    </section>
-    <section class="dashboard-history">
-      <div class="history-panel quotes">
-        <div class="panel-header">
-          <span class="panel-title">QUOTE HISTORY</span>
-          <div class="panel-tabs">
-            <button class="tab active">All Quotes</button>
-            <button class="tab">Pending</button>
-            <button class="tab">Accepted</button>
-            <button class="tab">Rejected</button>
-          </div>
-          <button class="panel-viewall">View All</button>
-        </div>
-        <div class="panel-list" id="dashQuotesHistory">
-          <!-- Quote entries will be rendered here -->
-        </div>
-      </div>
-      <div class="history-panel invoices">
-        <div class="panel-header">
-          <span class="panel-title">INVOICE HISTORY</span>
-          <div class="panel-tabs">
-            <button class="tab active">All Invoices</button>
-            <button class="tab">Unpaid</button>
-            <button class="tab">Paid</button>
-            <button class="tab">Overdue</button>
-            <button class="tab">Draft</button>
-          </div>
-          <button class="panel-viewall">View All</button>
-        </div>
-        <div class="panel-list" id="dashInvoicesHistory">
-          <!-- Invoice entries will be rendered here -->
-        </div>
-      </div>
-    </section>
+    <div id="viewDashboard">
+      <header class="dashboard-header">
+        <h2>Welcome back, Ronald <span class="wave">👋</span></h2>
+        <p>Here's what's happening with your business today.</p>
+      </header>
+      <section class="dashboard-cards"> ...existing code... </section>
+      <section class="dashboard-history"> ...existing code... </section>
+    </div>
+    <div id="viewInvoices" style="display:none;"><h2>Invoices</h2><div id="invoicesList">Loading...</div></div>
+    <div id="viewQuotes" style="display:none;"><h2>Quotes</h2><div id="quotesList">Loading...</div></div>
+    <div id="viewClients" style="display:none;"><h2>Clients</h2><div id="clientsList">Loading...</div></div>
+    <div id="viewItems" style="display:none;"><h2>Items / Services</h2><div id="itemsList">Loading...</div></div>
+    <div id="viewPayments" style="display:none;"><h2>Payments</h2><div id="paymentsList">Loading...</div></div>
+    <div id="viewReports" style="display:none;"><h2>Reports</h2><div id="reportsList">Loading...</div></div>
+    <div id="viewSettings" style="display:none;"><h2>Settings</h2><div id="settingsList">Loading...</div></div>
   </main>
 </div>
         <!-- All content below this line removed as requested -->
@@ -198,6 +154,7 @@
 <script src="ui.js?v=20260419r"></script>
 <script src="business.js?v=20260419r"></script>
 <script src="documents.js"></script>
+<script src="ui.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

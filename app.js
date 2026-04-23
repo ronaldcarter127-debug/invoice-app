@@ -1,3 +1,16 @@
+// Tab navigation logic
+function showTab(tab) {
+  const tabs = [
+    'dashboard', 'invoices', 'quotes', 'clients', 'items', 'payments', 'reports', 'settings'
+  ];
+  tabs.forEach(function(t) {
+    const view = document.getElementById('view' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (view) view.style.display = (t === tab) ? '' : 'none';
+    const link = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (link) link.classList.toggle('active', t === tab);
+  });
+}
+window.showTab = showTab;
 // Allow abandoning the form and returning to dashboard
 function abandonFormAndReturnToDashboard() {
   if (confirm('Are you sure you want to abandon this quote/invoice and return to the dashboard?')) {
