@@ -1,3 +1,5 @@
+// Expose quote creation helpers globally
+window.createSteppedQuote = createSteppedQuote;
 // Tab navigation logic
 function showTab(tab) {
   const tabs = [

@@ -1,3 +1,5 @@
+// Expose createQuote globally
+window.createQuote = createQuote;
 function getApiBaseUrl() {
   return "https://jobflow-api-bebm.onrender.com";
 }
