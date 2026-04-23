@@ -9,8 +9,39 @@ function showTab(tab) {
     const link = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
     if (link) link.classList.toggle('active', t === tab);
   });
+
+  // Load content for each tab
+  if (tab === 'invoices' && typeof showInvoiceHistory === 'function') {
+    showInvoiceHistory();
+  }
+  if (tab === 'quotes' && typeof showQuoteHistory === 'function') {
+    showQuoteHistory();
+  }
+  // Add similar logic for other tabs as you implement them
 }
 window.showTab = showTab;
+
+// Show Invoice Form
+function showInvoiceForm() {
+  if (typeof showFormStep === 'function') {
+    App.formMode = 'invoice';
+    showFormStep(2);
+    document.getElementById('appContainer').style.display = '';
+    document.querySelector('.dashboard-main').style.display = 'none';
+  }
+}
+window.showInvoiceForm = showInvoiceForm;
+
+// Show Quote Form
+function showQuoteForm() {
+  if (typeof showFormStep === 'function') {
+    App.formMode = 'quote';
+    showFormStep(2);
+    document.getElementById('appContainer').style.display = '';
+    document.querySelector('.dashboard-main').style.display = 'none';
+  }
+}
+window.showQuoteForm = showQuoteForm;
 // Allow abandoning the form and returning to dashboard
 function abandonFormAndReturnToDashboard() {
   if (confirm('Are you sure you want to abandon this quote/invoice and return to the dashboard?')) {
