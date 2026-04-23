@@ -12,10 +12,10 @@ function showTab(tab) {
 
   // Load content for each tab
   if (tab === 'invoices' && typeof showInvoiceHistory === 'function') {
-    showInvoiceHistory();
+    showInvoiceHistory('invoicesList');
   }
   if (tab === 'quotes' && typeof showQuoteHistory === 'function') {
-    showQuoteHistory();
+    showQuoteHistory('quotesList');
   }
   // Add similar logic for other tabs as you implement them
 }

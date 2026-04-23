@@ -565,7 +565,10 @@ function markInvoiceAsPaid(invoiceData) {
 // ─── history ──────────────────────────────────────────────────────────────────
 
 async function showQuoteHistory(filter, targetId) {
-  if (typeof showSpinner === "function") showSpinner("Loading quotes...");
+  if (typeof showSpinner === "function" && targetId) {
+    const el = document.getElementById(targetId);
+    if (el) el.innerHTML = 'Loading...';
+  }
   try {
     // Only refresh statuses in background, do not sync all
     if (typeof refreshAllQuoteStatuses === "function") {
@@ -581,8 +584,8 @@ async function showQuoteHistory(filter, targetId) {
     let html = "<div class='invoice-box'>";
     html += "<h2>Quote History</h2>";
     html += "<div class='history-tabs'>";
-    html += "<button type='button' class='history-tab " + (normalizedFilter === 'all' ? 'active' : '') + "' onclick=\"showQuoteHistory('all')\" >All Quotes</button>";
-    html += "<button type='button' class='history-tab " + (normalizedFilter === 'accepted' ? 'active' : '') + "' onclick=\"showQuoteHistory('accepted')\" >Accepted Quotes</button>";
+    html += "<button type='button' class='history-tab " + (normalizedFilter === 'all' ? 'active' : '') + "' onclick=\"showQuoteHistory('all', '"+targetId+"')\" >All Quotes</button>";
+    html += "<button type='button' class='history-tab " + (normalizedFilter === 'accepted' ? 'active' : '') + "' onclick=\"showQuoteHistory('accepted', '"+targetId+"')\" >Accepted Quotes</button>";
     html += "</div>";
 
     if (!filtered.length) {
@@ -620,86 +623,102 @@ async function showQuoteHistory(filter, targetId) {
       displayInvoice(html);
     }
   } finally {
-    if (typeof hideSpinner === "function") hideSpinner();
+    if (typeof hideSpinner === "function" && !targetId) hideSpinner();
   }
 }
 
 function showAcceptedQuotes() { return showQuoteHistory("accepted"); }
 
 async function showInvoiceHistory() {
-  if (typeof showSpinner === "function") showSpinner("Syncing invoices...");
+async function showInvoiceHistory(targetId) {
+  if (targetId) {
+    const el = document.getElementById(targetId);
+    if (el) el.innerHTML = 'Loading...';
+  }
   try {
-  await syncAccountDocuments();
-  let invoices = refreshAllInvoiceStatuses();
-  if (!invoices.length) { displayInvoice("<div class='invoice-box'><p>No invoices found.</p></div>"); return; }
-
-  const freeMonthlyLimit = typeof getFreeInvoiceMonthlyLimit === "function" ? getFreeInvoiceMonthlyLimit() : 5;
-  const currentMonthKey = (function () {
-    const d = new Date();
-    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
-  })();
-  const isPremium = !!App.premium;
-
-  // Sync payment status from server for each invoice
-  await Promise.all(invoices.map(async function (invoice) {
-    const invNum = normalizeDocNumber(invoice.invoiceNumber);
-    if (!invNum) return;
-    const s = await fetchJsonWithTimeout(`${API_BASE_URL}/payment-status/${encodeURIComponent(invNum)}`, 6000);
-    if (s && s.found && s.paid) {
-      invoice.status = "Paid";
-      invoice.paidAt = s.paidAt || invoice.paidAt || null;
-      const finalTotal = toAmount(invoice.finalTotal || invoice.total || calcItemsTotal(invoice.items));
-      invoice.amountPaid = Math.max(toAmount(invoice.amountPaid), toAmount(s.amountPaid), finalTotal);
-      invoice.balanceDue = 0;
-    } else if (s && s.found && s.status) {
-      invoice.status = s.status;
-      if (typeof s.amountPaid === "number") invoice.amountPaid = Math.max(toAmount(invoice.amountPaid), toAmount(s.amountPaid));
-      if (typeof s.balanceDue === "number") invoice.balanceDue = toAmount(s.balanceDue);
+    await syncAccountDocuments();
+    let invoices = refreshAllInvoiceStatuses();
+    if (!invoices.length) {
+      if (targetId && document.getElementById(targetId)) {
+        document.getElementById(targetId).innerHTML = "<div class='invoice-box'><p>No invoices found.</p></div>";
+      } else {
+        displayInvoice("<div class='invoice-box'><p>No invoices found.</p></div>");
+      }
+      return;
     }
-  }));
 
-  // Save synced statuses back to localStorage
-  const stored = getStoredInvoices();
-  invoices.forEach(function (inv) {
-    const idx = stored.findIndex(function (s) {
-      return normalizeDocNumber(s.invoiceNumber) === normalizeDocNumber(inv.invoiceNumber);
+    const freeMonthlyLimit = typeof getFreeInvoiceMonthlyLimit === "function" ? getFreeInvoiceMonthlyLimit() : 5;
+    const currentMonthKey = (function () {
+      const d = new Date();
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+    })();
+    const isPremium = !!App.premium;
+
+    // Sync payment status from server for each invoice
+    await Promise.all(invoices.map(async function (invoice) {
+      const invNum = normalizeDocNumber(invoice.invoiceNumber);
+      if (!invNum) return;
+      const s = await fetchJsonWithTimeout(`${API_BASE_URL}/payment-status/${encodeURIComponent(invNum)}`, 6000);
+      if (s && s.found && s.paid) {
+        invoice.status = "Paid";
+        invoice.paidAt = s.paidAt || invoice.paidAt || null;
+        const finalTotal = toAmount(invoice.finalTotal || invoice.total || calcItemsTotal(invoice.items));
+        invoice.amountPaid = Math.max(toAmount(invoice.amountPaid), toAmount(s.amountPaid), finalTotal);
+        invoice.balanceDue = 0;
+      } else if (s && s.found && s.status) {
+        invoice.status = s.status;
+        if (typeof s.amountPaid === "number") invoice.amountPaid = Math.max(toAmount(invoice.amountPaid), toAmount(s.amountPaid));
+        if (typeof s.balanceDue === "number") invoice.balanceDue = toAmount(s.balanceDue);
+      }
+    }));
+
+    // Save synced statuses back to localStorage
+    const stored = getStoredInvoices();
+    invoices.forEach(function (inv) {
+      const idx = stored.findIndex(function (s) {
+        return normalizeDocNumber(s.invoiceNumber) === normalizeDocNumber(inv.invoiceNumber);
+      });
+      if (idx !== -1) stored[idx] = Object.assign(stored[idx], { status: inv.status, balanceDue: inv.balanceDue, paidAt: inv.paidAt });
     });
-    if (idx !== -1) stored[idx] = Object.assign(stored[idx], { status: inv.status, balanceDue: inv.balanceDue, paidAt: inv.paidAt });
-  });
-  writeJson("invoiceHistory", stored);
+    writeJson("invoiceHistory", stored);
 
-  let html = "<div class='invoice-box'><h2>Invoice History</h2>";
-  if (!isPremium) {
-    const used = typeof getFreeInvoiceMonthlyUsage === "function" ? getFreeInvoiceMonthlyUsage(invoices) : 0;
-    html += "<p style='margin:0 0 12px 0;color:#6b7280;'>Free plan: " + used + "/" + freeMonthlyLimit + " invoices this month. Older entries this month are locked.</p>";
-  }
-
-  let unlockedThisMonthCount = 0;
-  invoices.slice().reverse().forEach(function (invoice) {
-    const status = invoice.status || getInvoiceStatus(invoice);
-    const statusClass = "status-" + status.toLowerCase();
-    const invKey = String(invoice.invoiceNumber || "").replace(/"/g, "&quot;");
-
-    const monthKey = String(invoice.createdMonthKey || "").trim();
-    const isCurrentMonth = monthKey === currentMonthKey;
-    const shouldLock = !isPremium && isCurrentMonth && unlockedThisMonthCount >= freeMonthlyLimit;
-    if (!shouldLock && isCurrentMonth) unlockedThisMonthCount += 1;
-
-    html += "<div class='quote-entry" + (shouldLock ? " invoice-entry-locked" : "") + "'>";
-    if (shouldLock) {
-      html += "<span class='invoice-locked-content'><strong>" + invoice.invoiceNumber + "</strong> <span class='status-badge status-locked'>LOCKED</span><br>" + (invoice.date || "No date") + "<br>" + (invoice.customer || "No customer") + "</span>";
-      html += "<span><button onclick='upgrade()'>Upgrade</button></span>";
-    } else {
-      html += "<span><strong>" + invoice.invoiceNumber + "</strong> <span class='status-badge " + statusClass + "'>" + status.toUpperCase() + "</span><br>" + (invoice.date || "No date") + "<br>" + (invoice.customer || "No customer") + "</span>";
-      html += "<span><button onclick='loadInvoice(\"" + invKey + "\")'>Open</button> <button onclick='deleteInvoice(\"" + invKey + "\")'>Delete</button></span>";
+    let html = "<div class='invoice-box'><h2>Invoice History</h2>";
+    if (!isPremium) {
+      const used = typeof getFreeInvoiceMonthlyUsage === "function" ? getFreeInvoiceMonthlyUsage(invoices) : 0;
+      html += "<p style='margin:0 0 12px 0;color:#6b7280;'>Free plan: " + used + "/" + freeMonthlyLimit + " invoices this month. Older entries this month are locked.</p>";
     }
+
+    let unlockedThisMonthCount = 0;
+    invoices.slice().reverse().forEach(function (invoice) {
+      const status = invoice.status || getInvoiceStatus(invoice);
+      const statusClass = "status-" + status.toLowerCase();
+      const invKey = String(invoice.invoiceNumber || "").replace(/"/g, "&quot;");
+
+      const monthKey = String(invoice.createdMonthKey || "").trim();
+      const isCurrentMonth = monthKey === currentMonthKey;
+      const shouldLock = !isPremium && isCurrentMonth && unlockedThisMonthCount >= freeMonthlyLimit;
+      if (!shouldLock && isCurrentMonth) unlockedThisMonthCount += 1;
+
+      html += "<div class='quote-entry" + (shouldLock ? " invoice-entry-locked" : "") + "'>";
+      if (shouldLock) {
+        html += "<span class='invoice-locked-content'><strong>" + invoice.invoiceNumber + "</strong> <span class='status-badge status-locked'>LOCKED</span><br>" + (invoice.date || "No date") + "<br>" + (invoice.customer || "No customer") + "</span>";
+        html += "<span><button onclick='upgrade()'>Upgrade</button></span>";
+      } else {
+        html += "<span><strong>" + invoice.invoiceNumber + "</strong> <span class='status-badge " + statusClass + "'>" + status.toUpperCase() + "</span><br>" + (invoice.date || "No date") + "<br>" + (invoice.customer || "No customer") + "</span>";
+        html += "<span><button onclick='loadInvoice(\"" + invKey + "\")'>Open</button> <button onclick='deleteInvoice(\"" + invKey + "\")'>Delete</button></span>";
+      }
+      html += "</div>";
+    });
     html += "</div>";
-  });
-  html += "</div>";
-  displayInvoice(html);
+    if (targetId && document.getElementById(targetId)) {
+      document.getElementById(targetId).innerHTML = html;
+    } else {
+      displayInvoice(html);
+    }
   } finally {
-    if (typeof hideSpinner === "function") hideSpinner();
+    // Only hide spinner if not using tab target
   }
+}
 }
 
 // ─── load / delete ────────────────────────────────────────────────────────────
