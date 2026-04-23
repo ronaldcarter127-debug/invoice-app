@@ -4,6 +4,25 @@ function getApiBaseUrl() {
 
 const API_BASE_URL = getApiBaseUrl();
 
+// Make getDocumentData globally available
+function getDocumentData() {
+  // TODO: Return the current form data as an object.
+  return {
+    items: App && App.items ? App.items : [],
+    total: 0,
+    taxPercent: 0,
+    amountPaid: 0,
+    finalTotal: 0,
+    balanceDue: 0,
+    notes: "",
+    customer: "",
+    email: "",
+    address: "",
+    description: ""
+  };
+}
+window.getDocumentData = getDocumentData;
+
 // ─── storage helpers ──────────────────────────────────────────────────────────
 
 function normalizeDocNumber(value) {
@@ -399,22 +418,6 @@ async function createQuote() {
   const materialsAmount = Number((document.getElementById("materialsAmount") || {}).value || 0);
   const isSteppedForm = laborAmount > 0 || materialsAmount > 0 || (App.items && App.items.length > 0);
   const data = getDocumentData();
-  function getDocumentData() {
-    // TODO: Return the current form data as an object.
-    return {
-      items: App && App.items ? App.items : [],
-      total: 0,
-      taxPercent: 0,
-      amountPaid: 0,
-      finalTotal: 0,
-      balanceDue: 0,
-      notes: "",
-      customer: "",
-      email: "",
-      address: "",
-      description: ""
-    };
-  }
   console.log("[createQuote] Data from form:", data);
   if (data.total <= 0) { alert("Add at least one item before creating quote"); return; }
 
