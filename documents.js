@@ -470,9 +470,13 @@ async function createQuote() {
     return;
   }
 
-  // After successful send, return to dashboard and update quote history
-  console.log("[createQuote] Showing dashboard after quote creation.");
-  showDashboard();
+  // After successful send, show done screen for quote
+  console.log("[createQuote] Showing done screen after quote creation.");
+  if (typeof showDoneScreen === "function") {
+    showDoneScreen(data.quoteNumber, null, "quote");
+  } else {
+    showDashboard();
+  }
 }
 
 function createDoc() {
