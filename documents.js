@@ -6,10 +6,18 @@ const API_BASE_URL = getApiBaseUrl();
 
 // Make getDocumentData globally available
 function getDocumentData() {
-  // TODO: Return the current form data as an object.
+  const items = App && App.items ? App.items : [];
+  const total = Array.isArray(items)
+    ? items.reduce((sum, item) => {
+        const qty = Number(item && item.qty || 0) || 0;
+        const price = Number(item && item.price || 0) || 0;
+        return sum + (qty * price);
+      }, 0)
+    : 0;
+
   return {
-    items: App && App.items ? App.items : [],
-    total: 0,
+    items,
+    total,
     taxPercent: 0,
     amountPaid: 0,
     finalTotal: 0,
