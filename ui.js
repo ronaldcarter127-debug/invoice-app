@@ -87,6 +87,11 @@ function updateLogoPreview(logoData) {
 }
 
 function updateLiveTotals() {
+  const itemsContainer = document.getElementById('items');
+  if (!itemsContainer) {
+    console.warn('[updateLiveTotals] Could not find #items container.');
+    return;
+  }
   const data = getDocumentData();
   const totalsDiv = document.getElementById("liveTotals");
   totalsDiv.innerHTML = [
@@ -129,9 +134,9 @@ function addItem(item) {
   div.appendChild(qty);
   div.appendChild(price);
 
-  var itemsContainer = document.getElementById("items");
+  const itemsContainer = document.getElementById("items");
   if (!itemsContainer) {
-    console.error('[addItem] Could not find #items container.');
+    console.warn('[addItem] Could not find #items container.');
     return;
   }
   itemsContainer.appendChild(div);
