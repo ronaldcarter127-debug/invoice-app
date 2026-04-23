@@ -515,7 +515,7 @@ function markInvoiceAsPaid(invoiceData) {
 
 // ─── history ──────────────────────────────────────────────────────────────────
 
-async function showQuoteHistory(filter) {
+async function showQuoteHistory(filter, targetId) {
   if (typeof showSpinner === "function") showSpinner("Loading quotes...");
   try {
     // Only refresh statuses in background, do not sync all
@@ -538,7 +538,11 @@ async function showQuoteHistory(filter) {
 
     if (!filtered.length) {
       html += "<p>No quotes found.</p></div>";
-      displayInvoice(html);
+      if (targetId && document.getElementById(targetId)) {
+        document.getElementById(targetId).innerHTML = html;
+      } else {
+        displayInvoice(html);
+      }
       return;
     }
 
@@ -561,7 +565,11 @@ async function showQuoteHistory(filter) {
     });
 
     html += "</div>";
-    displayInvoice(html);
+    if (targetId && document.getElementById(targetId)) {
+      document.getElementById(targetId).innerHTML = html;
+    } else {
+      displayInvoice(html);
+    }
   } finally {
     if (typeof hideSpinner === "function") hideSpinner();
   }

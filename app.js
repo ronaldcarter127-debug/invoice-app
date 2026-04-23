@@ -813,9 +813,13 @@ function showDashboard() {
   updateDashboard();
   updateDashboardAccountSync();
   loadAndDisplayDashboardPipelines();
-  // Only refresh quote statuses in background, do not sync all
+  // Always refresh quote statuses and update quote history panel
   if (typeof refreshAllQuoteStatuses === "function") {
-    setTimeout(() => { refreshAllQuoteStatuses().catch(() => {}); }, 100);
+    setTimeout(() => { refreshAllQuoteStatuses().then(() => {
+      if (typeof showQuoteHistory === "function") {
+        showQuoteHistory("all", "dashQuotesHistory");
+      }
+    }).catch(() => {}); }, 100);
   }
 }
 
