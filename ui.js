@@ -643,15 +643,21 @@ window.saveCurrentCustomer = saveCurrentCustomer;
 window.loadSavedCustomer = loadSavedCustomer;
 window.refreshSavedCustomersDropdown = refreshSavedCustomersDropdown;
 
+// Track current form mode: 'invoice' or 'quote'
+let currentFormMode = null;
+
 function showInvoiceForm() {
+  currentFormMode = 'invoice';
   document.getElementById('appContainer').style.display = '';
-  // Optionally hide dashboard/main content
   document.querySelector('.dashboard-main').style.display = 'none';
+  // Optionally update form title/fields for invoice
 }
 
 function showQuoteForm() {
+  currentFormMode = 'quote';
   document.getElementById('appContainer').style.display = '';
   document.querySelector('.dashboard-main').style.display = 'none';
+  // Optionally update form title/fields for quote
 }
 
 window.showInvoiceForm = showInvoiceForm;
