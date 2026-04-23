@@ -144,7 +144,7 @@ function updateReviewScreen() {
 
   if (heading) heading.textContent = mode === "quote" ? "Review Your Quote" : "Review Your Invoice";
   if (dueRow) dueRow.style.display = mode === "quote" ? "none" : "flex";
-  if (sendBtn) sendBtn.textContent = mode === "quote" ? "Send Quote" : "Send & Get Paid";
+  if (sendBtn) sendBtn.textContent = mode === "quote" ? "Create & Send" : "Send & Get Paid";
   
   (document.getElementById("reviewClient") || {}).textContent = clientName;
   (document.getElementById("reviewEmail") || {}).textContent = clientEmail || "(not provided)";
@@ -198,7 +198,7 @@ function showDoneScreen(docNumber, stripeUrl, mode) {
   if (doneTitle) doneTitle.textContent = docMode === "quote" ? "Quote Sent!" : "Invoice Sent!";
   if (doneMessage) {
     doneMessage.textContent = docMode === "quote"
-      ? "Your quote is ready and has been added to your quote history."
+      ? "Your quote has been created and emailed to your customer."
       : "Your invoice has been created and is ready to send.";
   }
   if (openPaymentLinkBtn) {
