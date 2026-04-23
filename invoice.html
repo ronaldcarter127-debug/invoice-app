@@ -13,31 +13,99 @@
 <link rel="manifest" href="manifest.json?v=20260420-modern">
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Allura&family=Alex+Brush&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="workspace/invoice-app/src/css/styles.css?v=20260420-modern">
+<link rel="stylesheet" href="workspace/invoice-app/src/css/modern-dashboard.css?v=20260422">
 </head>
-<body>
-<div class="preview" id="previewArea"></div>
+<body class="dark-theme">
+<div class="app-root">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">JobFlow Pro</div>
+      <div class="sidebar-user">
+        <span class="user-avatar">RC</span>
+        <span class="user-name">Ronald Carter</span>
+      </div>
+    </div>
+    <button class="sidebar-btn primary">+ New Invoice</button>
+    <button class="sidebar-btn">+ New Quote</button>
+    <nav class="sidebar-nav">
+      <a class="nav-link active">Dashboard</a>
+      <a class="nav-link">Invoices</a>
+      <a class="nav-link">Quotes</a>
+      <a class="nav-link">Clients</a>
+      <a class="nav-link">Items / Services</a>
+      <a class="nav-link">Payments</a>
+      <a class="nav-link">Reports</a>
+      <a class="nav-link">Settings</a>
+    </nav>
+    <div class="sidebar-help">
+      <button class="help-btn">View Help Center</button>
+    </div>
+  </aside>
 
-<!-- ── SETTINGS VIEW ── -->
-<div id="settingsView" style="display:none;">
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <span style="color:#f59e0b;font-size:16px;">[Settings View]</span>
-      <button class="dash-back" onclick="showDashboard()">&#8592; Back to Dashboard</button>
-    </div>
-    <h2 style="margin:0 0 14px;">Business Info</h2>
-    <div class="section">
-      <input id="businessName" placeholder="Business Name" onblur="saveBusinessInfo()">
-      <input id="businessAddress" placeholder="Address" onblur="saveBusinessInfo()">
-      <input id="businessPhone" placeholder="Phone" onblur="saveBusinessInfo()">
-      <input id="businessEmail" placeholder="Email" onblur="saveBusinessInfo()">
-      <input id="businessStripeUrl" placeholder="Stripe Checkout Link (optional)" onblur="saveBusinessInfo()">
-      <input id="businessLicense" placeholder="License Number (optional)" onblur="saveBusinessInfo()">
-      <input id="businessSignatureName" placeholder="Signature Name" onblur="saveBusinessInfo()">
-    </div>
-    <div class="section">
-      <h3>Logo</h3>
-      <input type="file" id="logoUpload" accept="image/*" onchange="handleLogoUpload(event)">
-      <div id="logoPreview" style="border:2px dashed #374151;padding:10px;text-align:center;border-radius:6px;min-height:60px;display:flex;align-items:center;justify-content:center;margin-top:8px;">
+  <!-- Main Content -->
+  <main class="dashboard-main">
+    <header class="dashboard-header">
+      <h2>Welcome back, Ronald <span class="wave">👋</span></h2>
+      <p>Here's what's happening with your business today.</p>
+    </header>
+    <section class="dashboard-cards">
+      <div class="card stat-card earned">
+        <div class="stat-title">Total Earned (This Month)</div>
+        <div class="stat-value">$8,450.00</div>
+        <div class="stat-sub">↑ 12% from last month</div>
+      </div>
+      <div class="card stat-card paid">
+        <div class="stat-title">Paid Invoices</div>
+        <div class="stat-value">$6,100.00</div>
+        <div class="stat-sub">8 invoices</div>
+      </div>
+      <div class="card stat-card unpaid">
+        <div class="stat-title">Unpaid Invoices</div>
+        <div class="stat-value">$2,350.00</div>
+        <div class="stat-sub">3 invoices</div>
+      </div>
+      <div class="card stat-card overdue">
+        <div class="stat-title">Overdue</div>
+        <div class="stat-value">$1,250.00</div>
+        <div class="stat-sub">2 invoices</div>
+      </div>
+    </section>
+    <section class="dashboard-history">
+      <div class="history-panel quotes">
+        <div class="panel-header">
+          <span class="panel-title">QUOTE HISTORY</span>
+          <div class="panel-tabs">
+            <button class="tab active">All Quotes</button>
+            <button class="tab">Pending</button>
+            <button class="tab">Accepted</button>
+            <button class="tab">Rejected</button>
+          </div>
+          <button class="panel-viewall">View All</button>
+        </div>
+        <div class="panel-list" id="dashQuotesHistory">
+          <!-- Quote entries will be rendered here -->
+        </div>
+      </div>
+      <div class="history-panel invoices">
+        <div class="panel-header">
+          <span class="panel-title">INVOICE HISTORY</span>
+          <div class="panel-tabs">
+            <button class="tab active">All Invoices</button>
+            <button class="tab">Unpaid</button>
+            <button class="tab">Paid</button>
+            <button class="tab">Overdue</button>
+            <button class="tab">Draft</button>
+          </div>
+          <button class="panel-viewall">View All</button>
+        </div>
+        <div class="panel-list" id="dashInvoicesHistory">
+          <!-- Invoice entries will be rendered here -->
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
         <span style="color:#6b7280;font-size:12px;">No logo uploaded</span>
       </div>
       <label style="display:block;margin-top:10px;color:#00ee58;font-size:13px;">Logo Size:</label>

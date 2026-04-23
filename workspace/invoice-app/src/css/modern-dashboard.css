@@ -1,0 +1,239 @@
+/* Modern dark dashboard theme for JobFlow Pro */
+:root {
+  --sidebar-bg: #101624;
+  --sidebar-accent: #232b3e;
+  --sidebar-text: #e5e7eb;
+  --sidebar-active: #3b82f6;
+  --main-bg: #0b1220;
+  --card-bg: #161c2e;
+  --card-border: #232b3e;
+  --card-radius: 18px;
+  --primary: #3b82f6;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --muted: #64748b;
+  --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body.dark-theme {
+  background: var(--main-bg);
+  color: #f8fafc;
+  font-family: var(--font-main);
+  margin: 0;
+}
+
+.app-root {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 260px;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 24px 0;
+  border-right: 1.5px solid var(--sidebar-accent);
+}
+.sidebar-header {
+  padding: 32px 24px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.logo {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: var(--primary);
+}
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.user-avatar {
+  background: var(--primary);
+  color: #fff;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+.user-name {
+  font-size: 1rem;
+  font-weight: 500;
+}
+.sidebar-btn {
+  margin: 12px 24px 0 24px;
+  padding: 12px 0;
+  border-radius: 10px;
+  border: none;
+  background: var(--sidebar-accent);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.sidebar-btn.primary {
+  background: var(--primary);
+}
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 24px 0 0 0;
+  padding: 0 24px;
+}
+.nav-link {
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-size: 1.05rem;
+  transition: background 0.18s, color 0.18s;
+  cursor: pointer;
+}
+.nav-link.active, .nav-link:hover {
+  background: var(--sidebar-active);
+  color: #fff;
+}
+.sidebar-help {
+  margin-top: auto;
+  padding: 0 24px;
+}
+.help-btn {
+  width: 100%;
+  padding: 10px 0;
+  border-radius: 8px;
+  border: 1.5px solid var(--primary);
+  background: none;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 18px;
+}
+
+.dashboard-main {
+  flex: 1;
+  padding: 40px 48px 32px 48px;
+  background: var(--main-bg);
+  min-width: 0;
+}
+.dashboard-header h2 {
+  margin: 0 0 6px 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+.dashboard-header p {
+  color: var(--muted);
+  margin: 0 0 24px 0;
+}
+.dashboard-cards {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.stat-card {
+  background: var(--card-bg);
+  border: 1.5px solid var(--card-border);
+  border-radius: var(--card-radius);
+  padding: 28px 32px 20px 32px;
+  min-width: 210px;
+  flex: 1;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stat-title {
+  color: var(--muted);
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+.stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 2px 0 0 0;
+}
+.stat-sub {
+  color: var(--success);
+  font-size: 0.98rem;
+  margin-top: 2px;
+}
+.stat-card.paid .stat-value { color: var(--success); }
+.stat-card.unpaid .stat-value { color: var(--warning); }
+.stat-card.overdue .stat-value { color: var(--danger); }
+
+.dashboard-history {
+  display: flex;
+  gap: 32px;
+}
+.history-panel {
+  background: var(--card-bg);
+  border: 1.5px solid var(--card-border);
+  border-radius: var(--card-radius);
+  flex: 1;
+  min-width: 320px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+  padding: 0 0 24px 0;
+  display: flex;
+  flex-direction: column;
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 0 24px;
+  gap: 10px;
+}
+.panel-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #60a5fa;
+}
+.history-panel.invoices .panel-title {
+  color: var(--warning);
+}
+.panel-tabs {
+  display: flex;
+  gap: 6px;
+}
+.tab {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 6px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+.tab.active, .tab:hover {
+  background: var(--sidebar-active);
+  color: #fff;
+}
+.panel-viewall {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-left: 10px;
+}
+.panel-list {
+  padding: 18px 24px 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+/* Add more styles for quote/invoice entries, badges, etc. as needed */
