@@ -138,28 +138,47 @@
 <!-- ── APP CONTAINER (FORM) ── -->
 <div id="appContainer" style="display:none;">
   <div class="card">
-    <div style="color:#f87171;font-size:16px;">[App Container: Invoice/Quote Form]</div>
-    <form id="mainForm" autocomplete="off">
-      <div class="section">
-        <input id="customer" placeholder="Client Name">
-        <input id="customerEmail" placeholder="Client Email">
-      </div>
-      <div class="section">
-        <input id="laborAmount" type="number" placeholder="Labor Amount">
-        <input id="materialsAmount" type="number" placeholder="Materials Amount">
-      </div>
-      <div class="section">
-        <div id="items"></div>
-        <button id="addItemBtn" type="button">Add Item</button>
-      </div>
-      <div class="section">
-        <input id="tax" type="number" placeholder="Tax %">
-        <input id="amountPaid" type="number" placeholder="Amount Paid">
-        <input id="paymentMethod" placeholder="Payment Method">
-        <input id="dueDate" placeholder="Due Date">
-        <textarea id="notes" placeholder="Notes"></textarea>
-      </div>
-    </form>
+    <div class="form-stepper">
+      <div class="form-step-dot" data-step="2"></div>
+      <div class="form-step-line"></div>
+      <div class="form-step-dot" data-step="3"></div>
+      <div class="form-step-line"></div>
+      <div class="form-step-dot" data-step="4"></div>
+      <div class="form-step-line"></div>
+      <div class="form-step-dot" data-step="5"></div>
+    </div>
+    <div class="form-step" data-step="2">
+      <h2>Client Info</h2>
+      <input id="customer" placeholder="Client Name">
+      <input id="customerEmail" placeholder="Client Email">
+      <button class="primary" onclick="nextFormStep(2);return false;">Next</button>
+    </div>
+    <div class="form-step" data-step="3" style="display:none;">
+      <h2>Job Breakdown</h2>
+      <input id="laborAmount" type="number" placeholder="Labor Amount">
+      <input id="materialsAmount" type="number" placeholder="Materials Amount">
+      <button onclick="prevFormStep(3);return false;">Back</button>
+      <button class="primary" onclick="nextFormStep(3);return false;">Next</button>
+    </div>
+    <div class="form-step" data-step="4" style="display:none;">
+      <h2>Review &amp; Send</h2>
+      <div id="reviewHeading"></div>
+      <div id="reviewClient"></div>
+      <div id="reviewEmail"></div>
+      <div id="reviewLabor"></div>
+      <div id="reviewMaterials"></div>
+      <div id="reviewTotal"></div>
+      <div id="reviewDueRow"></div>
+      <button onclick="prevFormStep(4);return false;">Back</button>
+      <button id="sendAndGetPaidBtn" class="primary">Send &amp; Get Paid</button>
+    </div>
+    <div class="form-step" data-step="5" style="display:none;">
+      <h2 id="doneTitle"></h2>
+      <div id="doneMessage"></div>
+      <div id="paymentLinkContainer"></div>
+      <button id="openPaymentLinkBtn" style="display:none;">Open Payment Link</button>
+      <button id="sendAnotherBtn">Send Another</button>
+    </div>
   </div>
 </div>
 
