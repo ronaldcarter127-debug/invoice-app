@@ -418,7 +418,8 @@ function createQuote() {
     .catch(function () {});
 
   if (isSteppedForm && typeof showDoneScreen === "function") {
-    showDoneScreen(data.quoteNumber, "", "quote");
+    // Instead of showing done screen, go directly to dashboard and update quote history
+    showDashboard();
   } else {
     renderDocument("Quote", data, true);
     resetEntryFieldsAfterCreate();
