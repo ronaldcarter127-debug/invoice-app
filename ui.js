@@ -642,3 +642,24 @@ function saveCurrentCustomer() {
 window.saveCurrentCustomer = saveCurrentCustomer;
 window.loadSavedCustomer = loadSavedCustomer;
 window.refreshSavedCustomersDropdown = refreshSavedCustomersDropdown;
+
+function showInvoiceForm() {
+  document.getElementById('appContainer').style.display = '';
+  // Optionally hide dashboard/main content
+  document.querySelector('.dashboard-main').style.display = 'none';
+}
+
+function showQuoteForm() {
+  document.getElementById('appContainer').style.display = '';
+  document.querySelector('.dashboard-main').style.display = 'none';
+}
+
+window.showInvoiceForm = showInvoiceForm;
+window.showQuoteForm = showQuoteForm;
+
+function showDashboard() {
+  document.getElementById('appContainer').style.display = 'none';
+  document.querySelector('.dashboard-main').style.display = '';
+}
+
+window.showDashboard = showDashboard;
