@@ -10,6 +10,10 @@ async function ensureAuthenticated() {
   return true;
 }
 window.ensureAuthenticated = ensureAuthenticated;
+function runAppInitOnce() {
+  // TODO: Add initialization logic here
+}
+window.runAppInitOnce = runAppInitOnce;
 // ...existing code...
 // Expose for inline HTML
 window.abandonFormAndReturnToDashboard = abandonFormAndReturnToDashboard;
