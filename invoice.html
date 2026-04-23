@@ -108,6 +108,8 @@
         </div>
         <div id="dashQuotesPipeline"></div>
       </div>
+    </div>
+    <div class="dash-main-grid" style="margin-top:18px;">
       <div class="dash-panel">
         <div class="dash-panel-title-row">
           <h3>Invoices</h3>
@@ -186,7 +188,7 @@
       <h2 id="doneTitle"></h2>
       <div id="doneMessage"></div>
       <div id="paymentLinkContainer"></div>
-      <button id="openPaymentLinkBtn" style="display:none;">Open Payment Link</button>
+      <button id="openPaymentLinkBtn" onclick="openPaymentLink()" style="display:inline-block;">Send Quote Email</button>
       <button id="sendAnotherBtn">Send Another</button>
       <button class="danger" style="margin-top:16px;font-size:14px;padding:4px 12px;" onclick="abandonFormAndReturnToDashboard()">Abandon & Back to Dashboard</button>
     </div>
