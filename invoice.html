@@ -58,7 +58,61 @@
         <p>Here's what's happening with your business today.</p>
       </header>
       <section class="dashboard-cards"> ...existing code... </section>
-      <section class="dashboard-history"> ...existing code... </section>
+      <section class="dashboard-cards">
+        <div class="card stat-card earned">
+          <div class="stat-title">Total Earned (This Month)</div>
+          <div class="stat-value" id="statTotalEarned">$0.00</div>
+          <div class="stat-sub" id="statEarnedChange"></div>
+        </div>
+        <div class="card stat-card paid">
+          <div class="stat-title">Paid Invoices</div>
+          <div class="stat-value" id="statPaid">$0.00</div>
+          <div class="stat-sub" id="statPaidCount"></div>
+        </div>
+        <div class="card stat-card unpaid">
+          <div class="stat-title">Unpaid Invoices</div>
+          <div class="stat-value" id="statUnpaid">$0.00</div>
+          <div class="stat-sub" id="statUnpaidCount"></div>
+        </div>
+        <div class="card stat-card overdue">
+          <div class="stat-title">Overdue</div>
+          <div class="stat-value" id="statOverdue">$0.00</div>
+          <div class="stat-sub" id="statOverdueCount"></div>
+        </div>
+      </section>
+      <section class="dashboard-history">
+        <div class="history-panel quotes">
+          <div class="panel-header">
+            <span class="panel-title">QUOTE HISTORY</span>
+            <div class="panel-tabs">
+              <button class="tab active">All Quotes</button>
+              <button class="tab">Pending</button>
+              <button class="tab">Accepted</button>
+              <button class="tab">Rejected</button>
+            </div>
+            <button class="panel-viewall">View All</button>
+          </div>
+          <div class="panel-list" id="dashQuotesHistory">
+            <!-- Quote entries will be rendered here -->
+          </div>
+        </div>
+        <div class="history-panel invoices">
+          <div class="panel-header">
+            <span class="panel-title">INVOICE HISTORY</span>
+            <div class="panel-tabs">
+              <button class="tab active">All Invoices</button>
+              <button class="tab">Unpaid</button>
+              <button class="tab">Paid</button>
+              <button class="tab">Overdue</button>
+              <button class="tab">Draft</button>
+            </div>
+            <button class="panel-viewall">View All</button>
+          </div>
+          <div class="panel-list" id="dashInvoicesHistory">
+            <!-- Invoice entries will be rendered here -->
+          </div>
+        </div>
+      </section>
     </div>
     <div id="viewInvoices" style="display:none;"><h2>Invoices</h2><div id="invoicesList">Loading...</div></div>
     <div id="viewQuotes" style="display:none;"><h2>Quotes</h2><div id="quotesList">Loading...</div></div>
