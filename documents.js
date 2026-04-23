@@ -87,6 +87,7 @@ async function postJsonWithTimeout(url, payload, timeoutMs) {
 }
 
 // ─── invoice computed fields ──────────────────────────────────────────────────
+  window.getDocumentData = getDocumentData;
 
 function refreshInvoiceComputedFields(invoiceData) {
   if (!invoiceData) return invoiceData;

@@ -5,6 +5,11 @@ function abandonFormAndReturnToDashboard() {
     showDashboard();
   }
 }
+async function ensureAuthenticated() {
+  // Stub: always resolve as authenticated for now
+  return true;
+}
+window.ensureAuthenticated = ensureAuthenticated;
 // ...existing code...
 // Expose for inline HTML
 window.abandonFormAndReturnToDashboard = abandonFormAndReturnToDashboard;
