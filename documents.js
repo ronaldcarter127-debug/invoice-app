@@ -393,7 +393,7 @@ async function syncQuoteToServer(quoteData) {
 
 // ─── create ───────────────────────────────────────────────────────────────────
 
-function createQuote() {
+async function createQuote() {
   const laborAmount = Number((document.getElementById("laborAmount") || {}).value || 0);
   const materialsAmount = Number((document.getElementById("materialsAmount") || {}).value || 0);
   const isSteppedForm = laborAmount > 0 || materialsAmount > 0 || (App.items && App.items.length > 0);
@@ -413,18 +413,25 @@ function createQuote() {
   clearAcceptedQuoteBanner();
   setInvoiceEditingLocked(false, "");
   saveQuote(data);
-  syncQuoteToServer(data)
-    .then(function () { return syncAccountDocuments(); })
-    .catch(function () {});
+  await syncQuoteToServer(data).catch(function () {});
+  await syncAccountDocuments().catch(function () {});
 
-  if (isSteppedForm && typeof showDoneScreen === "function") {
-    // Instead of showing done screen, go directly to dashboard and update quote history
-    showDashboard();
-  } else {
-    renderDocument("Quote", data, true);
-    resetEntryFieldsAfterCreate();
-    showOutputView();
+  // Send the quote email
+  const emailInput = document.getElementById("customerEmail");
+  const enteredEmail = String((emailInput && emailInput.value) || "").trim();
+  const to = enteredEmail || getBestCustomerEmail(data) || "";
+  if (!to) {
+    alert("No customer email provided. Please enter an email.");
+    return;
   }
+  const sent = await sendEmail(to);
+  if (!sent) {
+    alert("Quote was created but email failed to send.");
+    return;
+  }
+
+  // After successful send, return to dashboard and update quote history
+  showDashboard();
 }
 
 function createDoc() {
