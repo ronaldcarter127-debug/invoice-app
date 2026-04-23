@@ -129,7 +129,12 @@ function addItem(item) {
   div.appendChild(qty);
   div.appendChild(price);
 
-  document.getElementById("items").appendChild(div);
+  var itemsContainer = document.getElementById("items");
+  if (!itemsContainer) {
+    console.error('[addItem] Could not find #items container.');
+    return;
+  }
+  itemsContainer.appendChild(div);
   App.items.push(id);
 }
 

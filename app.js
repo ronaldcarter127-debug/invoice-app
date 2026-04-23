@@ -800,15 +800,21 @@ function showOutputView() {
 window.showOutputView = showOutputView;
 
 function showDashboard() {
-  document.getElementById("dashboard").style.display = "block";
-  document.getElementById("appContainer").style.display = "none";
-  document.getElementById("historyView").style.display = "none";
-  document.getElementById("settingsView").style.display = "none";
-  document.getElementById("customerListView").style.display = "none";
-  const accountView = document.getElementById("accountView");
+  var dashboard = document.getElementById("dashboard");
+  if (dashboard) dashboard.style.display = "block";
+  var appContainer = document.getElementById("appContainer");
+  if (appContainer) appContainer.style.display = "none";
+  var historyView = document.getElementById("historyView");
+  if (historyView) historyView.style.display = "none";
+  var settingsView = document.getElementById("settingsView");
+  if (settingsView) settingsView.style.display = "none";
+  var customerListView = document.getElementById("customerListView");
+  if (customerListView) customerListView.style.display = "none";
+  var accountView = document.getElementById("accountView");
   if (accountView) accountView.style.display = "none";
-  document.getElementById("output").innerHTML = "";
-  const previewArea = document.getElementById("previewArea");
+  var output = document.getElementById("output");
+  if (output) output.innerHTML = "";
+  var previewArea = document.getElementById("previewArea");
   if (previewArea) previewArea.classList.remove("show");
   updateDashboard();
   updateDashboardAccountSync();

@@ -398,6 +398,7 @@ async function createQuote() {
   const materialsAmount = Number((document.getElementById("materialsAmount") || {}).value || 0);
   const isSteppedForm = laborAmount > 0 || materialsAmount > 0 || (App.items && App.items.length > 0);
   const data = getDocumentData();
+  console.log("[createQuote] Data from form:", data);
   if (data.total <= 0) { alert("Add at least one item before creating quote"); return; }
 
   // Keep any payments received entered on the form
@@ -413,8 +414,17 @@ async function createQuote() {
   clearAcceptedQuoteBanner();
   setInvoiceEditingLocked(false, "");
   saveQuote(data);
-  await syncQuoteToServer(data).catch(function () {});
-  await syncAccountDocuments().catch(function () {});
+  console.log("[createQuote] Quote saved locally:", data);
+  await syncQuoteToServer(data).then((res) => {
+    console.log("[createQuote] Quote synced to server:", res);
+  }).catch(function (err) {
+    console.error("[createQuote] Error syncing quote to server:", err);
+  });
+  await syncAccountDocuments().then(() => {
+    console.log("[createQuote] Account documents synced.");
+  }).catch(function (err) {
+    console.error("[createQuote] Error syncing account documents:", err);
+  });
 
   // Send the quote email
   const emailInput = document.getElementById("customerEmail");
@@ -422,15 +432,18 @@ async function createQuote() {
   const to = enteredEmail || getBestCustomerEmail(data) || "";
   if (!to) {
     alert("No customer email provided. Please enter an email.");
+    console.warn("[createQuote] No customer email provided.");
     return;
   }
   const sent = await sendEmail(to);
+  console.log("[createQuote] sendEmail result:", sent);
   if (!sent) {
     alert("Quote was created but email failed to send.");
     return;
   }
 
   // After successful send, return to dashboard and update quote history
+  console.log("[createQuote] Showing dashboard after quote creation.");
   showDashboard();
 }
 
@@ -901,16 +914,22 @@ async function sendEmail(toOverride) {
   ).trim();
 
   const to = suggested || String(prompt("Enter customer email:") || "").trim();
-  if (!to) return false;
+  if (!to) {
+    console.warn("[sendEmail] No recipient email provided.");
+    return false;
+  }
 
   const payload = buildEmailPayload(source, kind, to);
+  console.log("[sendEmail] Payload:", payload);
 
   if (kind === "quote" && !payload.quoteNumber) {
     alert("Create or open a quote before sending email.");
+    console.warn("[sendEmail] No quote number in payload.");
     return false;
   }
   if (kind === "invoice" && !payload.invoiceNumber) {
     alert("Create or open an invoice before sending email.");
+    console.warn("[sendEmail] No invoice number in payload.");
     return false;
   }
 
@@ -927,6 +946,7 @@ async function sendEmail(toOverride) {
     });
 
     const result = await readJsonSafe(response);
+    console.log("[sendEmail] API response:", result);
     if (!response.ok) throw new Error(result.error || result.raw || "Email send failed.");
 
     // Backward-compatible success check:
@@ -950,6 +970,7 @@ async function sendEmail(toOverride) {
     return true;
   } catch (err) {
     alert("API request failed: " + endpoint + "\n" + String(err && err.message || "Email send failed."));
+    console.error("[sendEmail] API request failed:", err);
     return false;
   } finally {
     if (typeof hideSpinner === "function") hideSpinner();
