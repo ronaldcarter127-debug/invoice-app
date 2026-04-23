@@ -102,6 +102,7 @@ function showFormStep(step) {
 }
 
 function nextFormStep(fromStep) {
+  console.log('[nextFormStep] called with fromStep:', fromStep, 'App.formMode:', App.formMode);
   if (fromStep === 2) {
     // Validate client name
     const name = (document.getElementById("customer") || {}).value;
@@ -122,8 +123,11 @@ function nextFormStep(fromStep) {
     updateReviewScreen();
   } else if (fromStep === 4) {
     if (App.formMode === "quote") {
+      console.log('[nextFormStep] Step 4 branch, App.formMode:', App.formMode);
+      console.log('[nextFormStep] Creating stepped quote...');
       createSteppedQuote();
     } else {
+      console.log('[nextFormStep] Creating stepped invoice...');
       createSteppedInvoice();
     }
   }
