@@ -137,6 +137,10 @@
 
 <!-- ── APP CONTAINER (FORM) ── -->
 <div id="appContainer" style="display:none;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <span></span>
+    <button class="danger" style="font-size:14px;padding:4px 12px;" onclick="abandonFormAndReturnToDashboard()">Abandon & Back to Dashboard</button>
+  </div>
   <div class="card">
     <div class="form-stepper">
       <div class="form-step-dot" data-step="2"></div>
@@ -178,6 +182,7 @@
       <div id="paymentLinkContainer"></div>
       <button id="openPaymentLinkBtn" style="display:none;">Open Payment Link</button>
       <button id="sendAnotherBtn">Send Another</button>
+      <button class="danger" style="margin-top:16px;font-size:14px;padding:4px 12px;" onclick="abandonFormAndReturnToDashboard()">Abandon & Back to Dashboard</button>
     </div>
   </div>
 </div>

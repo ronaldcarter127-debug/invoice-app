@@ -1,3 +1,13 @@
+// Allow abandoning the form and returning to dashboard
+function abandonFormAndReturnToDashboard() {
+  if (confirm('Are you sure you want to abandon this quote/invoice and return to the dashboard?')) {
+    // Optionally reset form fields here if needed
+    showDashboard();
+  }
+}
+// ...existing code...
+// Expose for inline HTML
+window.abandonFormAndReturnToDashboard = abandonFormAndReturnToDashboard;
 const App = {
   items: [],
   premium: false,
