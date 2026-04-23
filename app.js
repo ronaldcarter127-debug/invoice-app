@@ -830,18 +830,41 @@ function showDashboard() {
 }
 
 function updateDashboard() {
-  const premium = App.premium;
-  const FREE_INVOICE_HISTORY_LIMIT = typeof getFreeInvoiceMonthlyLimit === "function" ? getFreeInvoiceMonthlyLimit() : 5;
-  const used = typeof getFreeInvoiceMonthlyUsage === "function" ? getFreeInvoiceMonthlyUsage() : 0;
-  const clampedUsed = Math.max(0, used);
-  const usageText = clampedUsed + "/" + FREE_INVOICE_HISTORY_LIMIT + " this month";
-  const badge = document.getElementById("dashPlanBadge");
-  const msg = document.getElementById("dashPlanMsg");
-  const upgradeBtn = document.getElementById("upgradeBtn");
-
-  if (badge) badge.textContent = premium ? "Premium Plan Active" : "Free Plan";
-  if (msg) msg.textContent = premium ? "All features unlocked." : "Tracking " + usageText;
-  if (upgradeBtn) upgradeBtn.style.display = "none";
+  // --- Dynamic dashboard stats ---
+  const invoices = (typeof getStoredInvoices === "function") ? getStoredInvoices() : [];
+  let totalEarned = 0, paid = 0, unpaid = 0, overdue = 0;
+  let paidCount = 0, unpaidCount = 0, overdueCount = 0;
+  const now = new Date();
+  const thisMonth = now.getMonth();
+  const thisYear = now.getFullYear();
+  invoices.forEach(inv => {
+    const invDate = new Date(inv.date || 0);
+    if (invDate.getMonth() === thisMonth && invDate.getFullYear() === thisYear) {
+      totalEarned += Number(inv.finalTotal || inv.total || 0);
+    }
+    if (String(inv.status).toLowerCase() === "paid") {
+      paid += Number(inv.finalTotal || inv.total || 0);
+      paidCount++;
+    } else if (String(inv.status).toLowerCase() === "overdue") {
+      overdue += Number(inv.finalTotal || inv.total || 0);
+      overdueCount++;
+    } else {
+      unpaid += Number(inv.finalTotal || inv.total || 0);
+      unpaidCount++;
+    }
+  });
+  // Set values in dashboard
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set("statTotalEarned", "$" + totalEarned.toLocaleString(undefined, {minimumFractionDigits:2}));
+  set("statPaid", "$" + paid.toLocaleString(undefined, {minimumFractionDigits:2}));
+  set("statUnpaid", "$" + unpaid.toLocaleString(undefined, {minimumFractionDigits:2}));
+  set("statOverdue", "$" + overdue.toLocaleString(undefined, {minimumFractionDigits:2}));
+  set("statPaidCount", paidCount + (paidCount === 1 ? " invoice" : " invoices"));
+  set("statUnpaidCount", unpaidCount + (unpaidCount === 1 ? " invoice" : " invoices"));
+  set("statOverdueCount", overdueCount + (overdueCount === 1 ? " invoice" : " invoices"));
+  // No hardcoded statEarnedChange for now
+  set("statEarnedChange", "");
+  // --- End dynamic dashboard stats ---
 }
 
 function openForm(mode) {
